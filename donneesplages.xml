@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
-    <application title="Plages surveillées de Nouvelle-Aquitaine" mouseposition="false" logo="img/logo/gip_littoral.png" measuretools="false" exportpng="true" style="css/themes/plage.css" togglealllayersfromtheme="true"/>
+    <application title="Plages surveillées de Nouvelle-Aquitaine" mouseposition="false" logo="apps/donneesplages/data/img/gip_littoral.png" measuretools="false" exportpng="true" style="css/themes/plage.css" togglealllayersfromtheme="true"/>
     <mapoptions maxzoom="19" projection="EPSG:3857" center="37263.77010759735,5620009.10189043" zoom="8" projextent="-20037508.342789244, -20037508.342789244, 20037508.342789244, 20037508.342789244" />
   
     <baselayers style="default"><!-- style="default"||gallery" -->
@@ -14,7 +14,7 @@
             url="https://wxs.ign.fr/ze8fc0m4nvhmj01g873zu12q/wmts" layers="GEOGRAPHICALGRIDSYSTEMS.MAPS.SCAN-EXPRESS.STANDARD" format="image/jpeg" visible="false" fromcapacity="false"
             attribution="&lt;a href='http://www.geoportail.fr/' target='_blank'>&lt;img src='http://api.ign.fr/geoportail/api/js/latest/theme/geoportal/img/logo_gp.gif'>&lt;/a>" style="normal" matrixset="PM" maxzoom="22"/>
     </baselayers>     
-    <proxy url="https://www.pigma.org/proxy/?url="/>
+    <!-- <proxy url="https://www.pigma.org/proxy/?url="/> -->
     <olscompletion url="https://api-adresse.data.gouv.fr/search/" type="ban" attribution="API adresse.data.gouv.fr"/>
     <searchparameters bbox="false" localities="false" features="true"/>  
 
@@ -24,7 +24,7 @@
                 name="Plages de Nouvelle-Aquitaine"
                 type="customlayer"
                 vectorlegend="true"
-                url="customlayers/plage.js"
+                url="apps/donneesplages/customlayers/plage.js"
                 queryable="true"
                 fields="nom"
                 aliases="Nom"
@@ -36,7 +36,7 @@
                 tooltip="true"
                 tooltipcontent="{{nom_plage}}"
                 attribution="GIP Littoral, SIRTAQUI, Charente Tourisme">
-                <template url="templates/plage.mst"></template>
+                <template url="apps/donneesplages/templates/plage.mst"></template>
             </layer>
 		</theme>         
     </themes>

@@ -1,0 +1,41 @@
+{{#features}}
+	<li class="item" style="width:238px;">
+	<center>
+		<h3 class="title-feature">{{nom_plage}}</h3>
+		<h4>{{grand_territoire}}</h4>
+		<p class="text-feature">
+		{{#photo}}
+			<center><img src="{{photo}}" alt="Région Nouvelle-Aquitaine" width="238px" /></center><br>
+		{{/photo}}
+			<span style="font-family:'roboto_bold'"> Plage surveillée :</span> {{plage_surveillee}}<br/><br/>
+			<span style="font-family:'roboto_bold'"> Ambiance de la page :</span> {{plage_ambiance}}<br/><br/>
+			<span style="font-family:'roboto_bold'"> Caractéristiques de la plage :</span> {{plage_caracteristiques}}<br/><br/>
+			<span style="font-family:'roboto_bold'"> Nature de la baignade :</span> {{nature_baignade}}<br/><br/>
+			<span style="font-family:'roboto_bold'"> Services et commerces :</span> {{services_commerces}}<br/><br/>
+			<span style="font-family:'roboto_bold'"> Equipements publics :</span> {{equipements_publics}}<br/><br/>
+			<span style="font-family:'roboto_bold'"> Labels handicap :</span> {{label_handicap}}<br/><br/>
+
+		</p>
+	</center>
+	</li>
+{{/features}}
+
+<style>
+	.title-feature {
+		color: #032E46;
+		font-family:"roboto_bold";
+		font-size:23px;
+		margin-bottom:1%;
+		line-height:1;
+	}
+	.text-feature{
+		font-family:"roboto_regular";
+		color:#555;
+		font-size:13px;
+		margin-top:10%;
+	}
+	.sub-title{
+		color: #032E46;
+		font-family:"roboto_bold";
+	}
+</style>
