@@ -30,11 +30,9 @@
                 aliases="Nom"
                 visible="true"
                 searchable="true"
-                filterable="true"
-                filterparams='[{"attribut": "grand_territoire", "type": "checkbox", "label": "Grand térritoire"}, {"attribut": "nom_plage", "type": "textbox", "label": "Nom de la plage"},{"attribut": "plage_surveillee", "type":"combobox", "label": "Plage surveillée" }]'
                 searchengine="fuse"
                 fusesearchkeys="nom_plage"
-                fusesearchresult="{{nom_plage}} - {{commune}}"
+                fusesearchresult="nom_plage"
                 tooltip="true"
                 tooltipcontent="{{nom_plage}}"
                 attribution="GIP Littoral, SIRTAQUI, Charente Tourisme">
@@ -42,7 +40,4 @@
             </layer>
 		</theme>
     </themes>
-    <extensions>
-        <extension type="component" id="logo" path="apps/donneesplages/addons" />
-    </extensions>
 </config>

@@ -24,17 +24,17 @@
                 name="Plages de Nouvelle-Aquitaine"
                 type="customlayer"
                 vectorlegend="true"
-                url="apps/donneesplages/customlayers/plage.js"
+                url="apps/donneesplages/customlayers/plage1.js"
                 queryable="true"
                 fields="nom"
                 aliases="Nom"
                 visible="true"
                 searchable="true"
-                filterable="true"
-                filterparams='[{"attribut": "grand_territoire", "type": "checkbox", "label": "Grand térritoire"}, {"attribut": "nom_plage", "type": "textbox", "label": "Nom de la plage"},{"attribut": "plage_surveillee", "type":"combobox", "label": "Plage surveillée" }]'
                 searchengine="fuse"
                 fusesearchkeys="nom_plage"
-                fusesearchresult="{{nom_plage}} - {{commune}}"
+                fusesearchresult="nom_plage"
+                filterable="true"
+                filterparams='[{"attribut": "equipements_publics", "type": "checkbox", "label": "Equipement public"}, {"attribut": "nom_plage", "type": "textbox", "label": "Nom de la plage"},{"attribut": "plage_surveillee", "type":"combobox", "label": "Plage surveillée" }]'
                 tooltip="true"
                 tooltipcontent="{{nom_plage}}"
                 attribution="GIP Littoral, SIRTAQUI, Charente Tourisme">
@@ -42,7 +42,4 @@
             </layer>
 		</theme>
     </themes>
-    <extensions>
-        <extension type="component" id="logo" path="apps/donneesplages/addons" />
-    </extensions>
 </config>
