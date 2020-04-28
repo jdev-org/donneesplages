@@ -1,0 +1,7 @@
+#right-panel .carousel-inner {
+  width: 500px;
+}
+#right-panel.active {
+  width: 500px;
+  opacity: 1;
+}
