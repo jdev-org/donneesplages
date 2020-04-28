@@ -31,7 +31,7 @@
                 visible="true"
                 searchable="true"
                 filterable="true"
-                filterparams='[{"attribut": "grand_territoire", "type": "checkbox", "label": "Grand térritoire"}, {"attribut": "nom_plage", "type": "textbox", "label": "Nom de la plage"},{"attribut": "plage_surveillee", "type":"combobox", "label": "Plage surveillée" },{"attribut" : "date_ouverture,date_fermeture", "type":"date", "label":"Par date"}]'
+                filterparams='[{"attribut": "grand_territoire", "type": "checkbox", "label": "Grand térritoire"}, {"attribut": "nom_plage", "type": "textbox", "label": "Nom de la plage"},{"attribut": "plage_surveillee", "type":"combobox", "label": "Plage surveillée" },{"attribut" : ["date_ouverture","date_fermeture"], "type":"date", "label":"Par date"}]'
                 searchengine="fuse"
                 fusesearchkeys="nom_plage"
                 fusesearchresult="{{nom_plage}} - {{commune}}"
