@@ -1,9 +1,9 @@
 {
     "js": [
-        "js/addbootstraptable.js"
+        "js/bootstrap-table.min.js"
     ],
-    "css": "https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.css",
-    "html": "",
-    "target": "",
+    "css": "css/bootstrap-table.min.css",
+    "html": "html/empty.html",
+    "target": "main",
     "options": {}
 }

@@ -1,9 +1,7 @@
 {
-    "js": [
-        "js/addstyleinfo.js"
-    ],
-    "css": "",
-    "html": "",
-    "target": "",
+    "js": [],
+    "css": "css/styleinfo.css",
+    "html": "html/empty.html",
+    "target": "main",
     "options": {}
 }
