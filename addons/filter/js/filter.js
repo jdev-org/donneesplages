@@ -462,11 +462,11 @@ var filter = (function() {
       ].join("");
       $("#toolstoolbar").prepend(button);
 
+      //TODO change init once filter are update each time
       var layerId = "";
       for (var [layer, params] of _layersParams) {
         layerId = layer;
       }
-
       // wait until layer is load before create filters
       mviewer.getLayer(layerId).layer.once('change', function(e) {
         _createFilterPanel();
