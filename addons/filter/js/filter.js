@@ -42,10 +42,10 @@ var filter = (function() {
     var layerParams = mviewer.customComponents.filter.config.options.layers;
 
     layerParams.forEach(layer => {
-        console.log("Layer : " + layer.layerId + " is filtereable");
-        // Should never happens but we could check if layer.id not already exist in _layersParams
-        _layersParams.set(layer.layerId, layer.filter);
-      });
+      console.log("Layer : " + layer.layerId + " is filtereable");
+      // Should never happens but we could check if layer.id not already exist in _layersParams
+      _layersParams.set(layer.layerId, layer.filter);
+    });
   };
 
   /**
@@ -101,18 +101,21 @@ var filter = (function() {
       features.forEach(feature => {
 
         if (feature.get(layerParams[index].attribut) != null) {
-        // if needed split values
-        var results = (feature.get(layerParams[index].attribut)).split(';');
+          // if needed split values with ;
+          var results = (feature.get(layerParams[index].attribut)).split(';');
 
-        results.forEach(result => {
-          // get value from feature, check if it does not already exist before insert
-           if(layerParams[index].values.indexOf(result) < 0) {
-            console.log("LayerId :" + layerId + "| Attribut : " + layerParams[index].attribut + " | Value : " + result);
-            layerParams[index].values.push(result);
-          }
-        });
-      }
+          results.forEach(result => {
+
+            // if new value
+            if (layerParams[index].values.indexOf(result) < 0) {
+              console.log("LayerId :" + layerId + "| Attribut : " + layerParams[index].attribut + " | Value : " + result);
+              layerParams[index].values.push(result);
+            }
+          });
+        }
       });
+      layerParams[index].values.sort();
+
       //TODO Manage date format
     }
 
@@ -124,16 +127,17 @@ var filter = (function() {
   var _addCheckboxFilter = function(divId, layerId, params) {
     var _checkBox = [
       '<div class="form-check mb-2 mr-sm-2">',
-      '<legend> ' + params.label + ' </legend>'
+      '<legend> ' + params.label + ' </legend>',
+      '<div class="form-check">'
     ];
 
     params.values.forEach(function(value, index, array) {
       console.log("Value : " + value);
-      _checkBox.push('<div class="form-check"><input type="checkbox" class="form-check-input" onclick="filter.onValueChange(this);" id="filterCheck-' + layerId + '-' + params.attribut + '-' + index + '">');
-      _checkBox.push('<label class="form-check-label" for="filterCheck-' + layerId + '-' + params.attribut + '-' + index + '">' + value + '</label></div>');
+      _checkBox.push('<input hidden type="checkbox" class="form-check-input" onclick="filter.onValueChange(this);" id="filterCheck-' + layerId + '-' + params.attribut + '-' + index + '">');
+      _checkBox.push('<label class="form-check-label" for="filterCheck-' + layerId + '-' + params.attribut + '-' + index + '">' + value + '</label>');
     });
 
-    _checkBox.push('</div>');
+    _checkBox.push('</div></div>');
     $("#" + divId).append(_checkBox.join(""));
   };
 
