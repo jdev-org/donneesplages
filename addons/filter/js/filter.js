@@ -100,11 +100,18 @@ var filter = (function() {
 
       features.forEach(feature => {
 
-        // get value from feature, checkk if it does not already exist before insert
-        if (feature.get(layerParams[index].attribut) != null && layerParams[index].values.indexOf(feature.get(layerParams[index].attribut)) < 0) {
-          console.log("LayerId :" + layerId + "| Attribut : " + layerParams[index].attribut + " | Value : " + feature.get(layerParams[index].attribut));
-          layerParams[index].values.push(feature.get(layerParams[index].attribut));
-        }
+        if (feature.get(layerParams[index].attribut) != null) {
+        // if needed split values
+        var results = (feature.get(layerParams[index].attribut)).split(';');
+
+        results.forEach(result => {
+          // get value from feature, check if it does not already exist before insert
+           if(layerParams[index].values.indexOf(result) < 0) {
+            console.log("LayerId :" + layerId + "| Attribut : " + layerParams[index].attribut + " | Value : " + result);
+            layerParams[index].values.push(result);
+          }
+        });
+      }
       });
       //TODO Manage date format
     }
