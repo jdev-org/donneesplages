@@ -19,50 +19,82 @@ var filter = (function() {
   var _visibleFeatures = new Map();
 
   /**
-   * Html template for filter panel, append to a global div
-   * @param {string} layerIdList if several layer create a different panel
+   * Property: masterFilterId
+   *  @type {String}
    */
-  var _filter_dialog = function(layerIdList) {
-    var _dialog = [
-      '<div id="advancedFilter" class="advancedFilter form-group">',
-      '<div><h2>Filtres</h2></div>',
-      '</div>'
-    ].join("");
-    $("#page-content-wrapper").append(_dialog);
-  };
+  var masterFilterId = "";
 
   /**
-   * Private Method: _configFilterableLayer
-   * expored as Public Methode configFilterableLayer
-   *  add filter params for current layer
+   * Public Method: _initFilterTool exported as init
    *
-   **/
-  var _configFilterableLayer = function() {
+   */
+  var _initFilterTool = function() {
 
     var layerParams = mviewer.customComponents.filter.config.options.layers;
 
     layerParams.forEach(layer => {
-      console.log("Layer : " + layer.layerId + " is filtereable");
       // Should never happens but we could check if layer.id not already exist in _layersParams
       _layersParams.set(layer.layerId, layer.filter);
+      _visibleFeatures.set(layerId, []);
     });
+
+    if (_layersParams.size > 0) {
+
+      //Add filter button to toolstoolbar
+      var button = [
+        '<button class="mv-modetools btn btn-default btn-raised" href="#"',
+        ' onclick="filter.toggle();"  id="filterbtn" title="Filtrer" i18n="filter.button.main"',
+        ' tabindex="115" accesskey="f">',
+        '<span class="glyphicon glyphicon-filter" aria-hidden="true"></span>',
+        '</button>'
+      ].join("");
+      $("#toolstoolbar").prepend(button);
+
+      //TODO change init once filter are update each time
+      var layerId = "";
+      for (var [layer, params] of _layersParams) {
+        layerId = layer;
+      }
+      // wait until layer is load before create filters
+      mviewer.getLayer(layerId).layer.once('change', function(e) {
+        _createFilterPanel();
+      });
+
+    }
   };
 
   /**
+   * Private Method: _toggle
+   *
+   * Open filtering panel
+   **/
+  var _toggle = function() {
+
+    // show or hide filter panel
+    if ($("#advancedFilter").is(':visible')) {
+      $('#filterbtn').removeClass('btn-default.focus');
+      $("#advancedFilter").hide();
+    } else {
+      $("#advancedFilter").show();
+    }
+  };
+
+  /**
+   * Private Method: _createFilterPanel
+   *
    *
    */
   var _createFilterPanel = function() {
-    // add master div
-    _filter_dialog();
 
-    // Parse all layer to get params
+    // Parse all layers to get params
     for (var [layerId, params] of _layersParams) {
 
+      // Create div
       var divId = "advancedFilter-" + layerId;
       $("#advancedFilter").append('<div id="' + divId + '" "></div>');
 
-      // update distinc values needed to create template
-      _updateDistinctValues(layerId, params);
+      // update distinct values needed to create template
+      _updateFeaturesDistinctValues(layerId);
 
       // Parse all params to create panel
       for (var index in params) {
@@ -79,18 +111,21 @@ var filter = (function() {
         }
       }
     }
-
   };
 
   /**
+   * Private Method: _updateDistinctValues for a layer
+   * @param {string} layerId The layer id to be filter
    *
    **/
-  var _updateDistinctValues = function(layerId, attributes) {
+  var _updateFeaturesDistinctValues = function(layerId) {
 
     // for given attributes array update values
     var layerParams = _layersParams.get(layerId);
+    var visibleFeatures = _visibleFeatures.get(layerId) == undefined ? [] : _visibleFeatures.get(layerId);
+
     var features = mviewer.getLayer(layerId).layer.getSource().getFeatures();
-    var initialFeatures = new Map();
+
     // Parse all params to create panel
     for (var index in layerParams) {
 
@@ -100,7 +135,7 @@ var filter = (function() {
 
       features.forEach(feature => {
 
-        if (feature.get(layerParams[index].attribut) != null) {
+        if ((visibleFeatures.length == 0 || visibleFeatures.includes(feature.getId())) && feature.get(layerParams[index].attribut) != null) {
           // if needed split values with ;
           var results = (feature.get(layerParams[index].attribut)).split(';');
 
@@ -122,19 +157,23 @@ var filter = (function() {
   };
 
   /**
+   * private _addCheckboxFilter
    *
+   * @param {String} divId - div id wher the checkbox group should be added
+   * @param {String} layerId - layer id needed to create includes
+   * @param {Object} filterParams - list of parameters filterParams.label and filterParames.attribut
    */
-  var _addCheckboxFilter = function(divId, layerId, params) {
+  var _addCheckboxFilter = function(divId, layerId, filterParams) {
     var _checkBox = [
       '<div class="form-check mb-2 mr-sm-2">',
-      '<legend> ' + params.label + ' </legend>',
+      '<legend> ' + filterParams.label + ' </legend>',
       '<div class="form-check">'
     ];
 
-    params.values.forEach(function(value, index, array) {
-      console.log("Value : " + value);
-      _checkBox.push('<input hidden type="checkbox" class="form-check-input" onclick="filter.onValueChange(this);" id="filterCheck-' + layerId + '-' + params.attribut + '-' + index + '">');
-      _checkBox.push('<label class="form-check-label" for="filterCheck-' + layerId + '-' + params.attribut + '-' + index + '">' + value + '</label>');
+    filterParams.values.forEach(function(value, index, array) {
+      var id = "filterCheck-" + layerId + "-" + filterParams.attribut + "-" + index;
+      _checkBox.push('<input hidden type="checkbox" class="form-check-input" onclick="filter.onValueChange(this);" id="' + id + '">');
+      _checkBox.push('<label class="form-check-label" for="' + id + '">' + value + '</label>');
     });
 
     _checkBox.push('</div></div>');
@@ -142,7 +181,11 @@ var filter = (function() {
   };
 
   /**
+   * private _addTextFilter
    *
+   * @param {String} divId - div id wher the checkbox group should be added
+   * @param {String} layerId - layer id needed to create includes
+   * @param {Object} filterParams - list of parameters filterParams.label and filterParames.attribut
    */
   var _addTextFilter = function(divId, layerId, params) {
     // ID - generate to be unique
@@ -174,6 +217,7 @@ var filter = (function() {
         $(">input[type=text]", ".bootstrap-tagsinput").val("");
       }, 1);
     });
+
     $("#" + id).on('itemRemoved', function(event) {
       _removeFilterElementFromList(layerId, params.attribut, event.item);
       _filterFeatures(layerId);
@@ -181,7 +225,11 @@ var filter = (function() {
   };
 
   /**
+   * private _addDateFilter
    *
+   * @param {String} divId - div id wher the checkbox group should be added
+   * @param {String} layerId - layer id needed to create includes
+   * @param {Object} filterParams - list of parameters filterParams.label and filterParames.attribut
    */
   var _addDateFilter = function(divId, layerId, params) {
     // for type date, two parameters are availables
@@ -204,18 +252,26 @@ var filter = (function() {
       todayHighlight: true
     });
 
-    $("#" + id).on('changeDate', function(e) {
-      console.log(e);
+    $("#" + id).on('changeDate', function(event) {
+      console.log(event);
       //  _addFilterElementToList(layerId, params.attribut, e.format());
     });
   };
 
+  /**
+   * private _addComboboxFilter
+   *
+   * @param {String} divId - div id wher the checkbox group should be added
+   * @param {String} layerId - layer id needed to create includes
+   * @param {Object} filterParams - list of parameters filterParams.label and filterParames.attribut
+   */
   var _addComboboxFilter = function(divId, layerId, params) {
+    var id = "filterCombo-" + layerId + "-" + params.attribut;
 
     var _comboBox = [
       '<div class="form-group mb-2 mr-sm-2">',
       '<legend> ' + params.label + ' </legend>',
-      '<select id="filterCombo-' + layerId + '-' + params.attribut + '" class="form-control" onchange="filter.onValueChange(this)">',
+      '<select id="' + id + '" class="form-control" onchange="filter.onValueChange(this)">',
       '<option selected>Choisissez...</option>'
     ];
 
@@ -226,22 +282,6 @@ var filter = (function() {
     _comboBox.push('</select></div>');
     $("#" + divId).append(_comboBox.join(""));
 
-  };
-
-  /**
-   * Private Method: _toggle
-   *
-   * Open filtering panel
-   **/
-  var _toggle = function() {
-
-    // show or hide filter panel
-    if ($("#advancedFilter").is(':visible')) {
-      $('#filterbtn').removeClass('btn-default.focus');
-      $("#advancedFilter").hide();
-    } else {
-      $("#advancedFilter").show();
-    }
   };
 
   /**
@@ -355,14 +395,6 @@ var filter = (function() {
     _filterFeatures(layerId);
   };
 
-  /**
-   * Private Method: _createIdFromInfo
-   *
-   *
-   **/
-  var _createIdFromInfo = function(layerId, attribute, indexValue, type) {
-
-  };
 
   /**
    * Private Method: _getValueFromInfo
@@ -397,9 +429,11 @@ var filter = (function() {
 
     var filtersByLayer = _currentFilters.get(layerId);
     var featuresToBeFiltered = mviewer.getLayer(layerId).layer.getSource().getFeatures();
+    var newVisibleFeatures = [];
 
     featuresToBeFiltered.forEach(feature => {
 
+      // filter only if parameters exist and if feature is in visiblefeature list
       if (filtersByLayer.length > 0) {
         hideFeature = false;
 
@@ -410,30 +444,35 @@ var filter = (function() {
           if (feature.get(filter.attribut) != null && new RegExp(filter.regexValue.join("|")).test(feature.get(filter.attribut))) {
             feature.setStyle(null);
           } else {
-            // hide
-            // TODO save style for each feature
+            // tag as hide if a least one condition is ok
             hideFeature = true;
           }
 
         });
         if (hideFeature) {
           feature.setStyle(new ol.style.Style({}));
+        } else {
+          newVisibleFeatures.push(feature.getId);
         }
       }
       // clear filter
       else {
         feature.setStyle(null);
+        newVisibleFeatures.push(feature.getId);
       }
     });
+    _visibleFeatures.set(layerId, newVisibleFeatures);
   };
 
   /**
    * Private Method: _clearFilterFeatures
+   * @param {String} layerId layer id from layer to be cleared
    *
    **/
   var _clearFilterFeatures = function(layerId) {
 
     var featuresToUnFiltered = mviewer.getLayer(layerId).layer.getSource().getFeatures();
+    _visibleFeatures.set(layerId, []);
     featuresToUnFiltered.forEach(feature => {
       // apply initial style
       feature.setStyle(null);
@@ -452,47 +491,8 @@ var filter = (function() {
     };
   }
 
-
-  /**
-   * Public Method: _initFilterTool exported as init
-   *
-   */
-  var _initFilterTool = function() {
-
-    _configFilterableLayer();
-
-    if (_layersParams.size > 0) {
-
-      //Add filter button to toolstoolbar
-      var button = [
-        '<button class="mv-modetools btn btn-default btn-raised" href="#"',
-        ' onclick="filter.toggle();"  id="filterbtn" title="Filtrer" i18n="filter.button.main"',
-        ' tabindex="115" accesskey="f">',
-        '<span class="glyphicon glyphicon-filter" aria-hidden="true"></span>',
-        '</button>'
-      ].join("");
-      $("#toolstoolbar").prepend(button);
-
-      //TODO change init once filter are update each time
-      var layerId = "";
-      for (var [layer, params] of _layersParams) {
-        layerId = layer;
-      }
-      // wait until layer is load before create filters
-      mviewer.getLayer(layerId).layer.once('change', function(e) {
-        _createFilterPanel();
-      });
-
-    }
-  };
-
-  var _init = function() {
-    console.log("init");
-  };
-
   return {
-    init: _init,
-    configFilterableLayer: _initFilterTool,
+    init: _initFilterTool,
     toggle: _toggle,
     filterFeatures: _filterFeatures,
     onValueChange: _onValueChange
@@ -501,4 +501,4 @@ var filter = (function() {
 })();
 
 new CustomComponent("filter", filter.init);
-filter.configFilterableLayer();
+//filter.configFilterableLayer();
