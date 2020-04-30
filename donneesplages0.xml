@@ -32,7 +32,7 @@
                 searchable="true"
                 searchengine="fuse"
                 fusesearchkeys="nom_plage"
-                fusesearchresult="nom_plage"
+                fusesearchresult="{{nom_plage}} - {{commune}}"
                 tooltip="true"
                 tooltipcontent="{{nom_plage}}"
                 attribution="GIP Littoral, SIRTAQUI, Charente Tourisme">
@@ -40,4 +40,11 @@
             </layer>
 		</theme>
     </themes>
+    <extensions>
+        <extension type="component" id="logo" path="apps/donneesplages/addons" />
+        <!-- Add librairie used in plage.mst template -->
+        <extension type="component" id="bootstraptable" path="apps/donneesplages/addons" />
+        <!-- Enlarge left feature panel -->
+        <extension type="component" id="styleinfo" path="apps/donneesplages/addons" />
+    </extensions>
 </config>

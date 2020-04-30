@@ -1,9 +1,35 @@
 {
-    "js": [],
-    "css": "logo.css",
-    "html": "logo.html",
-    "target": "map",
-    "options": {
-        "title": "filtrer"
-    }
+  "js": ["js/filter.js"],
+  "css": "css/filter.css",
+  "html": "filter.html",
+  "target": "page-content-wrapper",
+  "options": {
+    "title": "filtrer",
+    "layers":
+      [{
+        "layerId": "plage",
+        "filter": [{
+            "attribut": "grand_territoire",
+            "type": "checkbox",
+            "label": "Grand térritoire"
+          },
+          {
+            "attribut": "nom_plage",
+            "type": "textbox",
+            "label": "Nom de la plage"
+          },
+          {
+            "attribut": "plage_surveillee",
+            "type": "combobox",
+            "label": "Plage surveillée"
+          },
+          {
+            "attribut": ["date_ouverture", "date_fermeture"],
+            "type": "date",
+            "label": "Par date"
+          }
+        ]
+      }
+    ]
+  }
 }
