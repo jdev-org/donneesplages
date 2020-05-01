@@ -30,7 +30,8 @@
         {
           "attribut": ["date_ouverture", "date_fermeture"],
           "type": "date",
-          "label": "Ouverte le"
+          "label": "Ouverte le",
+          "dateFormat": "YYYY-mm-ddZ"
         }
       ]
     }]

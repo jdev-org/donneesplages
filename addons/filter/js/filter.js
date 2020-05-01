@@ -19,12 +19,6 @@ var filter = (function() {
   var _visibleFeatures = new Map();
 
   /**
-   * Property: masterFilterId
-   *  @type {String}
-   */
-  var masterFilterId = "";
-
-  /**
    * Public Method: _initFilterTool exported as init
    *
    */
@@ -57,7 +51,7 @@ var filter = (function() {
       }
       // wait until layer is load before create filters
       mviewer.getLayer(layerId).layer.once('change', function(e) {
-        _createFilterPanel();
+        _manageFilterPanel();
       });
 
     }
@@ -84,14 +78,17 @@ var filter = (function() {
    *
    *
    */
-  var _createFilterPanel = function() {
+  var _manageFilterPanel = function() {
 
     // Parse all layers to get params
     for (var [layerId, params] of _layersParams) {
 
       // Create div
-      var divId = "advancedFilter-" + layerId;
-      $("#advancedFilter").append('<div id="' + divId + '" "></div>');
+      var destinationDivId = "advancedFilter-" + layerId;
+
+      if(('#'+destinationDivId).length){
+        $("#advancedFilter").append('<div id="' + destinationDivId + '" "></div>');
+      }
 
       // update distinct values needed to create template
       _updateFeaturesDistinctValues(layerId);
@@ -101,17 +98,26 @@ var filter = (function() {
 
         // condition on type
         if (params[index].type == "checkbox") {
-          _addCheckboxFilter(divId, layerId, params[index]);
+          _manageCheckboxFilter(destinationDivId, layerId, params[index]);
         } else if (params[index].type == "combobox") {
-          _addComboboxFilter(divId, layerId, params[index]);
+          _manageComboboxFilter(destinationDivId, layerId, params[index]);
         } else if (params[index].type == "textbox") {
-          _addTextFilter(divId, layerId, params[index]);
+          _manageTextFilter(destinationDivId, layerId, params[index]);
         } else if (params[index].type == "date") {
-          _addDateFilter(divId, layerId, params[index]);
+          _manageDateFilter(destinationDivId, layerId, params[index]);
         }
       }
     }
   };
+
+  /**
+  *
+  */
+  var _setMasterFilterDivId= function(layerId, id){
+    var params = _layersParams.get(layerId);
+
+  };
+
 
   /**
    * Private Method: _updateDistinctValues for a layer
@@ -163,21 +169,39 @@ var filter = (function() {
    * @param {String} layerId - layer id needed to create includes
    * @param {Object} filterParams - list of parameters filterParams.label and filterParames.attribut
    */
-  var _addCheckboxFilter = function(divId, layerId, filterParams) {
-    var _checkBox = [
-      '<div class="form-check mb-2 mr-sm-2">',
-      '<legend> ' + filterParams.label + ' </legend>',
-      '<div class="form-check">'
-    ];
+  var _manageCheckboxFilter = function(divId, layerId, filterParams) {
+    var id = "filterCheck-" + layerId + "-" + filterParams.attribut;
+    var clearId = "filterClear-" + layerId + "-" + filterParams.attribut;
 
+    var _checkBox = [];
+    var alreadyExist = $('#' +id).length;
+
+    // test if div alreay exist
+    if (alreadyExist){
+       $('#' +id).empty();
+   }else{
+     _checkBox = [
+      '<div class="form-check mb-2 mr-sm-2">',
+        '<div class="form-check filter-legend">',
+          '<legend > ' + filterParams.label + ' </legend>',
+          '<span id='+clearId+' class="filter-clear glyphicon glyphicon-remove" onclick="filter.clearFilter(this.id);"></span>',
+        '</div>',
+        '<div id ="'+id+'" class="form-check">'
+    ];
+  }
     filterParams.values.forEach(function(value, index, array) {
       var id = "filterCheck-" + layerId + "-" + filterParams.attribut + "-" + index;
       _checkBox.push('<input hidden type="checkbox" class="form-check-input" onclick="filter.onValueChange(this);" id="' + id + '">');
       _checkBox.push('<label class="form-check-label" for="' + id + '">' + value + '</label>');
     });
 
-    _checkBox.push('</div></div>');
-    $("#" + divId).append(_checkBox.join(""));
+    if (!alreadyExist){
+          _checkBox.push('</div></div>');
+          $("#" + divId).append(_checkBox.join(""));
+    }else{
+        $("#" + id).append(_checkBox.join(""));
+    }
+
   };
 
   /**
@@ -187,14 +211,29 @@ var filter = (function() {
    * @param {String} layerId - layer id needed to create includes
    * @param {Object} filterParams - list of parameters filterParams.label and filterParames.attribut
    */
-  var _addTextFilter = function(divId, layerId, params) {
+  var _manageTextFilter = function(divId, layerId, params) {
     // ID - generate to be unique
     var id = "filterText-" + layerId + "-" + params.attribut;
+    var clearId = "filterClear-" + layerId + "-" + params.attribut;
+
+    // If alreadyExist, juste update params values
+    if ($('#' +id).length){
+      // Update tagsinput params
+      $("#" + id).tagsinput({
+        typeahead: {
+          source: params.values
+        },
+        freeInput: false
+      });
+   }else{
 
     // HTML
     var _text = [
       '<div class="form-check mb-2 mr-sm-2">',
-      '<legend> ' + params.label + ' </legend>'
+      '<div class="form-check filter-legend">',
+        '<legend > ' + params.label + ' </legend>',
+        '<span id='+clearId+' class="filter-clear glyphicon glyphicon-remove"></span>',
+      '</div>',
     ];
     _text.push('<input type="text" value="" data-role="tagsinput" id="' + id + '" class="form-control">');
     _text.push('</div>');
@@ -210,6 +249,7 @@ var filter = (function() {
 
     //EVENT
     $("#" + id).on('itemAdded', function(event) {
+      _setMasterFilterDivId(layerId, id);
       _addFilterElementToList(layerId, params.attribut, event.item);
       _filterFeatures(layerId);
       // remover entered text
@@ -218,10 +258,17 @@ var filter = (function() {
       }, 1);
     });
 
+    $("#" + clearId).on('click', function(event){
+      $("#" + id).tagsinput('removeAll');
+      _removeFilterElementFromList(layerId, params.attribut, null);
+      _filterFeatures(layerId);
+    });
+
     $("#" + id).on('itemRemoved', function(event) {
       _removeFilterElementFromList(layerId, params.attribut, event.item);
       _filterFeatures(layerId);
     });
+  }
   };
 
   /**
@@ -231,17 +278,19 @@ var filter = (function() {
    * @param {String} layerId - layer id needed to create includes
    * @param {Object} filterParams - list of parameters filterParams.label and filterParames.attribut
    */
-  var _addDateFilter = function(divId, layerId, params) {
+  var _manageDateFilter = function(divId, layerId, params) {
     // for type date, two parameters are availables
     // create unique id with first parameter
     var id = "filterDate-" + layerId + "-" + params.attribut[0];
-    var _datePicker = [
-      '<div class="form-group form-group-timer mb-2 mr-sm-2">',
-      '<legend> ' + params.label + ' </legend>'
-    ];
-    _datePicker.push('<input type="text" class="form-control" id="' + id + '" />');
-    _datePicker.push('</div>');
-    $("#" + divId).append(_datePicker.join(""));
+    if (!$('#' +id).length){
+      var _datePicker = [
+        '<div class="form-group form-group-timer mb-2 mr-sm-2">',
+        '<legend> ' + params.label + ' </legend>'
+      ];
+      _datePicker.push('<input type="text" class="form-control" id="' + id + '" />');
+      _datePicker.push('</div>');
+      $("#" + divId).append(_datePicker.join(""));
+    }
 
     $("#" + id).datepicker({
       format: "yyyy-mm-dd",
@@ -253,6 +302,7 @@ var filter = (function() {
     });
 
     $("#" + id).on('changeDate', function(event) {
+      _setMasterFilterDivId(layerId, id);
       console.log(event);
       //  _addFilterElementToList(layerId, params.attribut, e.format());
     });
@@ -265,23 +315,40 @@ var filter = (function() {
    * @param {String} layerId - layer id needed to create includes
    * @param {Object} filterParams - list of parameters filterParams.label and filterParames.attribut
    */
-  var _addComboboxFilter = function(divId, layerId, params) {
+  var _manageComboboxFilter = function(divId, layerId, params) {
     var id = "filterCombo-" + layerId + "-" + params.attribut;
+    var clearId = "filterClear-" + layerId + "-" + params.attribut;
+    var comboBox = [];
 
-    var _comboBox = [
-      '<div class="form-group mb-2 mr-sm-2">',
-      '<legend> ' + params.label + ' </legend>',
-      '<select id="' + id + '" class="form-control" onchange="filter.onValueChange(this)">',
-      '<option selected>Choisissez...</option>'
-    ];
+    // If alreadyExist, juste update params values
+    if ($('#' +id).length){
+      $('#' +id).empty();
+    }else{
+      comboBox = [
+        '<div class="form-group mb-2 mr-sm-2">',
+        '<div class="form-check filter-legend">',
+          '<legend > ' + params.label + ' </legend>',
+          '<span id='+clearId+' class="filter-clear glyphicon glyphicon-remove"></span>',
+        '</div>',
+        '<select id="' + id + '" class="form-control" onchange="filter.onValueChange(this)">'];
+    }
+
+    comboBox.push('<option selected>Choisissez...</option>');
 
     params.values.forEach(function(value, index, array) {
-      console.log("Value : " + value);
-      _comboBox.push(' <option>' + value + '</option>');
+      comboBox.push(' <option>' + value + '</option>');
     });
-    _comboBox.push('</select></div>');
-    $("#" + divId).append(_comboBox.join(""));
+    if ($('#' +id).length){
+        $("#" + id).append(comboBox.join(""));
+    }else{
+        comboBox.push('</select></div>');
+        $("#" + divId).append(comboBox.join(""));
+    }
 
+    $("#" + clearId).on('click', function(event){
+      _removeFilterElementFromList(layerId, params.attribut, null);
+      _filterFeatures(layerId);
+    });
   };
 
   /**
@@ -370,6 +437,7 @@ var filter = (function() {
     var attribut = filtreInformation[2];
     var value = element.value;
 
+    _setMasterFilterDivId(layerId, element.id);
     // checkbox return index of value in _layersParams
     if (type == "filterCheck") {
       var indexValue = filtreInformation[3];
@@ -452,16 +520,31 @@ var filter = (function() {
         if (hideFeature) {
           feature.setStyle(new ol.style.Style({}));
         } else {
-          newVisibleFeatures.push(feature.getId);
+          newVisibleFeatures.push(feature.getId());
         }
       }
       // clear filter
       else {
         feature.setStyle(null);
-        newVisibleFeatures.push(feature.getId);
+        newVisibleFeatures.push(feature.getId());
       }
     });
     _visibleFeatures.set(layerId, newVisibleFeatures);
+    _manageFilterPanel(layerId);
+  };
+
+  /**
+  *
+  */
+  var _clearFilter = function(id) {
+    // get information for elment id ( type-layerid-attribut-index)
+    var filtreInformation = id.split("-");
+    var type = filtreInformation[0];
+    var layerId = filtreInformation[1];
+    var attribut = filtreInformation[2];
+
+    _removeFilterElementFromList(layerId, attribut, null);
+    _filterFeatures(layerId);
   };
 
   /**
@@ -473,10 +556,12 @@ var filter = (function() {
 
     var featuresToUnFiltered = mviewer.getLayer(layerId).layer.getSource().getFeatures();
     _visibleFeatures.set(layerId, []);
+    _currentFilters.set(layerId, {});
     featuresToUnFiltered.forEach(feature => {
       // apply initial style
       feature.setStyle(null);
     });
+    _manageFilterPanel(layerId);
   };
 
   /**
@@ -488,14 +573,15 @@ var filter = (function() {
     // Parse all layer to get params
     for (var [layerId, params] of _layersParams) {
       _clearFilterFeatures(layerId);
-    };
-  }
+    }
+  };
 
   return {
     init: _initFilterTool,
     toggle: _toggle,
     filterFeatures: _filterFeatures,
-    onValueChange: _onValueChange
+    onValueChange: _onValueChange,
+    clearFilter: _clearFilter
   };
 
 })();
