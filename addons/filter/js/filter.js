@@ -142,6 +142,14 @@ var filter = (function() {
       features.forEach(feature => {
 
         if ((visibleFeatures.length == 0 || visibleFeatures.includes(feature.getId())) && feature.get(layerParams[index].attribut) != null) {
+
+          if(layerParams[index].type == "date"){
+              // date debut
+              feature.get(layerParams[index].attribut[0])
+              // date fin
+              feature.get(layerParams[index].attribut[1])
+
+          }else{
           // if needed split values with ;
           var results = (feature.get(layerParams[index].attribut)).split(';');
 
@@ -149,10 +157,10 @@ var filter = (function() {
 
             // if new value
             if (layerParams[index].values.indexOf(result) < 0) {
-              console.log("LayerId :" + layerId + "| Attribut : " + layerParams[index].attribut + " | Value : " + result);
               layerParams[index].values.push(result);
             }
           });
+        }
         }
       });
       layerParams[index].values.sort();

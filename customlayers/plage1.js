@@ -1,22 +1,65 @@
 {
-mviewer.customLayers.plage = {};
-mviewer.customLayers.plage.layer = new ol.layer.Vector({
-        source: new ol.source.Vector({
-            url: "apps/donneesplages/data/sample2.json",
-            format: new ol.format.GeoJSON()
-        }),
-style: new ol.style.Style({
+  var today = new Date();
+  var dd = String(today.getDate()).padStart(2, '0');
+  var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+  var yyyy = today.getFullYear();
+
+  var todayText = mm + '/' + dd + '/' + yyyy;
+
+  mviewer.customLayers.plage = {};
+  mviewer.customLayers.plage.legend = { items: [] };
+
+  var styleOuvert = [new ol.style.Style({
     image: new ol.style.Circle({
-        fill: new ol.style.Fill({
-            color: "#239BDC"
-        }),
-        stroke: new ol.style.Stroke({
-            color: "#ffffff",
-            width: 2
-        }),
-        radius: 6
+      fill: new ol.style.Fill({
+        color: '#C31632'
+      }),
+      stroke: new ol.style.Stroke({
+        color: "#ffffff",
+        width: 2
+      }),
+      radius: 7
     })
-})
+  })];
+
+  var styleFerme = [new ol.style.Style({
+    image: new ol.style.Circle({
+      fill: new ol.style.Fill({
+        color: '#696969'
+      }),
+      stroke: new ol.style.Stroke({
+        color: "#ffffff",
+        width: 2
+      }),
+      radius: 7
+    })
+  })];
+
+  mviewer.customLayers.plage.legend.items.push({
+    styles: styleOuvert,
+    label: "Surveilance ouverte",
+    geometry: "Point"
   });
-mviewer.customLayers.plage.handle = false;
+  mviewer.customLayers.plage.legend.items.push({
+    styles: styleFerme,
+    label: "Surveillance non ouverte",
+    geometry: "Point"
+  });
+
+  mviewer.customLayers.plage.layer = new ol.layer.Vector({
+    source: new ol.source.Vector({
+      url: "apps/donneesplages/data/plage_fme.json",
+      format: new ol.format.GeoJSON()
+    }),
+    style: function(feature, resolution) {
+      var stl;
+      if (feature.get('date_ouverture') >= todayText) {
+        stl = styleOuvert;
+      } else {
+        stl = styleFerme;
+      }
+      return stl;
+    }
+  });
+  mviewer.customLayers.plage.handle = false;
 }
