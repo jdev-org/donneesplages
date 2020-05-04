@@ -28,21 +28,22 @@
 }
 
 .advancedFilter .form-check-label {
-  margin: 4px;
-  background-color: #9DE0EF;
-  border-radius: 4px;
-  padding: 4px;
+  display: inline-block;
 }
 
 .advancedFilter .form-check-label:hover {
-  margin: 4px;
   background-color: #EFEFEF;
-  border-radius: 4px;
 }
 
+.advancedFilter .form-check-label-checked{
+  background-color: #BBBBBB;
+}
+
+/* needed to add x button on filter */
 .filter-legend {
   position: relative;
 }
+
 .filter-legend .glyphicon {
   position: absolute;
   cursor: pointer;

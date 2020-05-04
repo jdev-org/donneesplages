@@ -5,33 +5,38 @@
   "target": "page-content-wrapper",
   "options": {
     "title": "filtrer",
+    "open": true,
+    "zoomOnFeature": true,
     "layers": [{
       "layerId": "plage",
       "filter": [{
           "attribut": "grand_territoire",
-          "type": "checkbox",
+          "type": "button",
           "label": "Grand térritoire"
         },
         {
           "attribut": "equipements_services",
-          "type": "checkbox",
-          "label": "Service"
+          "type": "button",
+          "label": "Service",
+          "updateOnChange": true
         },
         {
           "attribut": "nature_baignade",
           "type": "combobox",
-          "label": "Nature de baignade"
+          "label": "Nature de baignade",
+          "updateOnChange": true
         },
         {
           "attribut": "commune",
           "type": "textbox",
-          "label": "Commune"
+          "label": "Commune",
+          "updateOnChange": true
         },
         {
           "attribut": ["date_ouverture", "date_fermeture"],
           "type": "date",
           "label": "Ouverte le",
-          "dateFormat": "YYYY-mm-ddZ"
+          "updateOnChange": true
         }
       ]
     }]

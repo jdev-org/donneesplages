@@ -4,13 +4,7 @@ var filter = (function() {
    * Property: _layersParams
    *  @type {Map}
    */
-  var _layersParams = new Map();
-
-  /**
-   * Property: _currentFilters
-   *  @type {Map}
-   */
-  var _currentFilters = new Map();
+  var _layersFiltersParams = new Map();
 
   /**
    * Property: _visibleFeatures
@@ -25,14 +19,16 @@ var filter = (function() {
   var _initFilterTool = function() {
 
     var layerParams = mviewer.customComponents.filter.config.options.layers;
+    var layerId = "";
 
     layerParams.forEach(layer => {
+      layerId = layer.layerId;
       // Should never happens but we could check if layer.id not already exist in _layersParams
-      _layersParams.set(layer.layerId, layer.filter);
+      _layersFiltersParams.set(layerId, layer.filter);
       _visibleFeatures.set(layerId, []);
     });
 
-    if (_layersParams.size > 0) {
+    if (_layersFiltersParams.size > 0) {
 
       //Add filter button to toolstoolbar
       var button = [
@@ -44,16 +40,13 @@ var filter = (function() {
       ].join("");
       $("#toolstoolbar").prepend(button);
 
-      //TODO change init once filter are update each time
-      var layerId = "";
-      for (var [layer, params] of _layersParams) {
-        layerId = layer;
-      }
-      // wait until layer is load before create filters
+      // wait until at least one layer is load before create filter panel
       mviewer.getLayer(layerId).layer.once('change', function(e) {
         _manageFilterPanel();
+        if(mviewer.customComponents.filter.config.options.open){
+          $("#advancedFilter").show();
+        }
       });
-
     }
   };
 
@@ -81,12 +74,13 @@ var filter = (function() {
   var _manageFilterPanel = function() {
 
     // Parse all layers to get params
-    for (var [layerId, params] of _layersParams) {
+    for (var [layerId, params] of _layersFiltersParams) {
 
-      // Create div
+      // Create div id
       var destinationDivId = "advancedFilter-" + layerId;
 
-      if(('#'+destinationDivId).length){
+      // Create div only if not exist
+      if (!$('#' + destinationDivId).length) {
         $("#advancedFilter").append('<div id="' + destinationDivId + '" "></div>');
       }
 
@@ -101,6 +95,8 @@ var filter = (function() {
           _manageCheckboxFilter(destinationDivId, layerId, params[index]);
         } else if (params[index].type == "combobox") {
           _manageComboboxFilter(destinationDivId, layerId, params[index]);
+        } else if (params[index].type == "button") {
+          _manageButtonFilter(destinationDivId, layerId, params[index]);
         } else if (params[index].type == "textbox") {
           _manageTextFilter(destinationDivId, layerId, params[index]);
         } else if (params[index].type == "date") {
@@ -108,14 +104,6 @@ var filter = (function() {
         }
       }
     }
-  };
-
-  /**
-  *
-  */
-  var _setMasterFilterDivId= function(layerId, id){
-    var params = _layersParams.get(layerId);
-
   };
 
 
@@ -127,45 +115,62 @@ var filter = (function() {
   var _updateFeaturesDistinctValues = function(layerId) {
 
     // for given attributes array update values
-    var layerParams = _layersParams.get(layerId);
+    var layerFiltersParams = _layersFiltersParams.get(layerId);
     var visibleFeatures = _visibleFeatures.get(layerId) == undefined ? [] : _visibleFeatures.get(layerId);
 
     var features = mviewer.getLayer(layerId).layer.getSource().getFeatures();
 
     // Parse all params to create panel
-    for (var index in layerParams) {
+    for (var index in layerFiltersParams) {
 
-      // Removed old values or initialise array
-      // Array use to build panel
-      layerParams[index].values = [];
+      // init current filters values
+      layerFiltersParams[index].currentValues = layerFiltersParams[index].currentValues ? layerFiltersParams[index].currentValues : [];
+      layerFiltersParams[index].currentRegexValues = layerFiltersParams[index].currentRegexValues ? layerFiltersParams[index].currentRegexValues : [];
 
-      features.forEach(feature => {
 
-        if ((visibleFeatures.length == 0 || visibleFeatures.includes(feature.getId())) && feature.get(layerParams[index].attribut) != null) {
+      // undefined if first loop
+      if (layerFiltersParams[index].availableValues == undefined || layerFiltersParams[index].updateOnChange) {
+        // Removed old values or initialise array
+        // Array use to build panel
+        layerFiltersParams[index].availableValues = [];
 
-          if(layerParams[index].type == "date"){
-              // date debut
-              feature.get(layerParams[index].attribut[0])
-              // date fin
-              feature.get(layerParams[index].attribut[1])
+        features.forEach(feature => {
 
-          }else{
-          // if needed split values with ;
-          var results = (feature.get(layerParams[index].attribut)).split(';');
+          // If feature is visible and value not null
+          if ((visibleFeatures.length == 0 || visibleFeatures.includes(feature.getId())) && feature.get(layerFiltersParams[index].attribut) != null) {
 
-          results.forEach(result => {
+            // for date type
+            if (layerFiltersParams[index].type == "date") {
 
-            // if new value
-            if (layerParams[index].values.indexOf(result) < 0) {
-              layerParams[index].values.push(result);
+                if(!_isEmpty(layerFiltersParams[index].attribut[0]) && !_isEmpty(layerFiltersParams[index].attribut[0])){
+                  var startDate = _stringToDate(feature.get(layerFiltersParams[index].attribut[0]));
+                  var endDate = _stringToDate(feature.get(layerFiltersParams[index].attribut[1]));
+
+                  if( layerFiltersParams[index].availableValues.length ==  0 || startDate <= layerFiltersParams[index].availableValues[O]){
+                    layerFiltersParams[index].availableValues[O] = startDate;
+                  }
+                  if( layerFiltersParams[index].availableValues.length ==  0 || endDate <= layerFiltersParams[index].availableValues[O]){
+                    layerFiltersParams[index].availableValues[1] = endDate;
+                  }
+                }
+            } else {
+              // if needed, split values with ; Feature values can be one String separate by ;
+              // TODO see if separator need to be put in config
+              var results = (feature.get(layerFiltersParams[index].attribut)).split(';');
+
+              results.forEach(result => {
+
+                // if new value
+                if (layerFiltersParams[index].availableValues.indexOf(result) < 0) {
+                  layerFiltersParams[index].availableValues.push(result);
+                }
+              });
             }
-          });
-        }
-        }
-      });
-      layerParams[index].values.sort();
+          }
+        });
+        layerFiltersParams[index].availableValues.sort();
+      }
 
-      //TODO Manage date format
     }
 
   };
@@ -182,32 +187,89 @@ var filter = (function() {
     var clearId = "filterClear-" + layerId + "-" + filterParams.attribut;
 
     var _checkBox = [];
-    var alreadyExist = $('#' +id).length;
+    var alreadyExist = $('#' + id).length;
 
     // test if div alreay exist
-    if (alreadyExist){
-       $('#' +id).empty();
-   }else{
-     _checkBox = [
-      '<div class="form-check mb-2 mr-sm-2">',
+    if (alreadyExist) {
+      $('#' + id).empty();
+    } else {
+      _checkBox = [
+        '<div class="form-check mb-2 mr-sm-2">',
         '<div class="form-check filter-legend">',
-          '<legend > ' + filterParams.label + ' </legend>',
-          '<span id='+clearId+' class="filter-clear glyphicon glyphicon-remove" onclick="filter.clearFilter(this.id);"></span>',
+        '<legend > ' + filterParams.label + ' </legend>',
+        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-remove" onclick="filter.clearFilter(this.id);"></span>',
         '</div>',
-        '<div id ="'+id+'" class="form-check">'
-    ];
-  }
-    filterParams.values.forEach(function(value, index, array) {
+        '<div id ="' + id + '" class="form-check">'
+      ];
+    }
+    filterParams.availableValues.forEach(function(value, index, array) {
       var id = "filterCheck-" + layerId + "-" + filterParams.attribut + "-" + index;
-      _checkBox.push('<input hidden type="checkbox" class="form-check-input" onclick="filter.onValueChange(this);" id="' + id + '">');
+      _checkBox.push('<div>');
+      _checkBox.push('<input type="checkbox" class="form-check-input" id="' + id + '"');
+      if (filterParams.currentValues.includes(value)) {
+        _checkBox.push(' checked="checked" ');
+      }
+      _checkBox.push(' onclick="filter.onValueChange(this);">');
       _checkBox.push('<label class="form-check-label" for="' + id + '">' + value + '</label>');
+      _checkBox.push('</div>');
     });
 
-    if (!alreadyExist){
-          _checkBox.push('</div></div>');
-          $("#" + divId).append(_checkBox.join(""));
-    }else{
-        $("#" + id).append(_checkBox.join(""));
+    if (!alreadyExist) {
+      _checkBox.push('</div></div>');
+      $("#" + divId).append(_checkBox.join(""));
+    } else {
+      $("#" + id).append(_checkBox.join(""));
+    }
+
+  };
+
+  /**
+   * private _manageButtonFilter
+   *
+   * @param {String} divId - div id wher the checkbox group should be added
+   * @param {String} layerId - layer id needed to create includes
+   * @param {Object} filterParams - list of parameters filterParams.label and filterParames.attribut
+   */
+  var _manageButtonFilter = function(divId, layerId, filterParams) {
+    var id = "filterCheck-" + layerId + "-" + filterParams.attribut;
+    var clearId = "filterClear-" + layerId + "-" + filterParams.attribut;
+
+    var _buttonForm = [];
+    var alreadyExist = $('#' + id).length;
+
+    // test if div alreay exist
+    if (alreadyExist) {
+      $('#' + id).empty();
+    } else {
+      _buttonForm = [
+        '<div class="form-check mb-2 mr-sm-2">',
+        '<div class="form-check filter-legend">',
+        '<legend > ' + filterParams.label + ' </legend>',
+        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-remove" onclick="filter.clearFilter(this.id);"></span>',
+        '</div>',
+        '<div id ="' + id + '" class="form-check">'
+      ];
+    }
+    filterParams.availableValues.forEach(function(value, index, array) {
+      var id = "filterCheck-" + layerId + "-" + filterParams.attribut + "-" + index;
+      _buttonForm.push('<input hidden type="checkbox" class="form-check-input" id="' + id + '"');
+      if (filterParams.currentValues.includes(value)) {
+        _buttonForm.push(' checked="checked" ');
+      }
+      _buttonForm.push(' onclick="filter.onValueChange(this);">');
+
+      _buttonForm.push('<label class="form-check-label label label-info ');
+      if (filterParams.currentValues.includes(value)) {
+        _buttonForm.push(' form-check-label-checked ');
+      }
+      _buttonForm.push('" for="' + id + '">' + value + '</label>');
+    });
+
+    if (!alreadyExist) {
+      _buttonForm.push('</div></div>');
+      $("#" + divId).append(_buttonForm.join(""));
+    } else {
+      $("#" + id).append(_buttonForm.join(""));
     }
 
   };
@@ -225,58 +287,57 @@ var filter = (function() {
     var clearId = "filterClear-" + layerId + "-" + params.attribut;
 
     // If alreadyExist, juste update params values
-    if ($('#' +id).length){
+    if ($('#' + id).length) {
       // Update tagsinput params
       $("#" + id).tagsinput({
         typeahead: {
-          source: params.values
+          source: params.availableValues
         },
         freeInput: false
       });
-   }else{
+    } else {
 
-    // HTML
-    var _text = [
-      '<div class="form-check mb-2 mr-sm-2">',
-      '<div class="form-check filter-legend">',
+      // HTML
+      var _text = [
+        '<div class="form-check mb-2 mr-sm-2">',
+        '<div class="form-check filter-legend">',
         '<legend > ' + params.label + ' </legend>',
-        '<span id='+clearId+' class="filter-clear glyphicon glyphicon-remove"></span>',
-      '</div>',
-    ];
-    _text.push('<input type="text" value="" data-role="tagsinput" id="' + id + '" class="form-control">');
-    _text.push('</div>');
-    $("#" + divId).append(_text.join(""));
+        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-remove"></span>',
+        '</div>',
+      ];
+      _text.push('<input type="text" value="" data-role="tagsinput" id="' + id + '" class="form-control">');
+      _text.push('</div>');
+      $("#" + divId).append(_text.join(""));
 
-    // Update tagsinput params
-    $("#" + id).tagsinput({
-      typeahead: {
-        source: params.values
-      },
-      freeInput: false
-    });
+      // Update tagsinput params
+      $("#" + id).tagsinput({
+        typeahead: {
+          source: params.availableValues
+        },
+        freeInput: false
+      });
 
-    //EVENT
-    $("#" + id).on('itemAdded', function(event) {
-      _setMasterFilterDivId(layerId, id);
-      _addFilterElementToList(layerId, params.attribut, event.item);
-      _filterFeatures(layerId);
-      // remover entered text
-      setTimeout(function() {
-        $(">input[type=text]", ".bootstrap-tagsinput").val("");
-      }, 1);
-    });
+      //EVENT
+      $("#" + id).on('itemAdded', function(event) {
+        _addFilterElementToList(layerId, params.attribut, event.item);
+        _filterFeatures(layerId);
+        // remover entered text
+        setTimeout(function() {
+          $(">input[type=text]", ".bootstrap-tagsinput").val("");
+        }, 1);
+      });
 
-    $("#" + clearId).on('click', function(event){
-      $("#" + id).tagsinput('removeAll');
-      _removeFilterElementFromList(layerId, params.attribut, null);
-      _filterFeatures(layerId);
-    });
+      $("#" + clearId).on('click', function(event) {
+        $("#" + id).tagsinput('removeAll');
+        _removeFilterElementFromList(layerId, params.attribut, null);
+        _filterFeatures(layerId);
+      });
 
-    $("#" + id).on('itemRemoved', function(event) {
-      _removeFilterElementFromList(layerId, params.attribut, event.item);
-      _filterFeatures(layerId);
-    });
-  }
+      $("#" + id).on('itemRemoved', function(event) {
+        _removeFilterElementFromList(layerId, params.attribut, event.item);
+        _filterFeatures(layerId);
+      });
+    }
   };
 
   /**
@@ -290,7 +351,7 @@ var filter = (function() {
     // for type date, two parameters are availables
     // create unique id with first parameter
     var id = "filterDate-" + layerId + "-" + params.attribut[0];
-    if (!$('#' +id).length){
+    if (!$('#' + id).length) {
       var _datePicker = [
         '<div class="form-group form-group-timer mb-2 mr-sm-2">',
         '<legend> ' + params.label + ' </legend>'
@@ -304,15 +365,19 @@ var filter = (function() {
       format: "yyyy-mm-dd",
       language: "fr",
       autoclose: true,
-      startDate: '-3d',
+      startDate: params.availableValues[0],
+      endDate: params.availableValues[1],
       clearBtn: true,
       todayHighlight: true
     });
 
     $("#" + id).on('changeDate', function(event) {
-      _setMasterFilterDivId(layerId, id);
-      console.log(event);
-      //  _addFilterElementToList(layerId, params.attribut, e.format());
+      if(typeof(event.date) == "undefined"){
+        _removeFilterElementFromList(layerId, params.attribut, null);
+      }else{
+        _addFilterElementToList(layerId, params.attribut, event.date, "date");
+      }
+      _filterFeatures(layerId);
     });
   };
 
@@ -329,31 +394,37 @@ var filter = (function() {
     var comboBox = [];
 
     // If alreadyExist, juste update params values
-    if ($('#' +id).length){
-      $('#' +id).empty();
-    }else{
+    if ($('#' + id).length) {
+      $('#' + id).empty();
+    } else {
       comboBox = [
         '<div class="form-group mb-2 mr-sm-2">',
         '<div class="form-check filter-legend">',
-          '<legend > ' + params.label + ' </legend>',
-          '<span id='+clearId+' class="filter-clear glyphicon glyphicon-remove"></span>',
+        '<legend > ' + params.label + ' </legend>',
+        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-remove"></span>',
         '</div>',
-        '<select id="' + id + '" class="form-control" onchange="filter.onValueChange(this)">'];
+        '<select id="' + id + '" class="form-control" onchange="filter.onValueChange(this)">'
+      ];
     }
 
-    comboBox.push('<option selected>Choisissez...</option>');
+    comboBox.push('<option>Choisissez...</option>');
 
-    params.values.forEach(function(value, index, array) {
-      comboBox.push(' <option>' + value + '</option>');
+    params.availableValues.forEach(function(value, index, array) {
+      if (params.currentValues.includes(value)) {
+        comboBox.push(' <option selected="selected">' + value + '</option>');
+      } else {
+        comboBox.push(' <option>' + value + '</option>');
+      }
+
     });
-    if ($('#' +id).length){
-        $("#" + id).append(comboBox.join(""));
-    }else{
-        comboBox.push('</select></div>');
-        $("#" + divId).append(comboBox.join(""));
+    if ($('#' + id).length) {
+      $("#" + id).append(comboBox.join(""));
+    } else {
+      comboBox.push('</select></div>');
+      $("#" + divId).append(comboBox.join(""));
     }
 
-    $("#" + clearId).on('click', function(event){
+    $("#" + clearId).on('click', function(event) {
       _removeFilterElementFromList(layerId, params.attribut, null);
       _filterFeatures(layerId);
     });
@@ -372,30 +443,18 @@ var filter = (function() {
 
     // Add filter only if there something to filter
     if (layerId != null && attribut != null && value != null) {
-      var filtersByLayer = (_currentFilters.get(layerId) != null ? _currentFilters.get(layerId) : []);
+      var layerFiltersParams = _layersFiltersParams.get(layerId);
 
       // If attribut exist add new value to existing one
-      var filteringOnAttributeExist = false;
-      filtersByLayer.forEach(function(filter, index, array) {
-        if (filter.attribut == attribut && value != null && !filter.values.includes(value)) {
-          filteringOnAttributeExist = true;
-          filter.values.push(value);
-          filter.regexValue.push(value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+      layerFiltersParams.forEach(function(filter, index, array) {
+        if(filter.attribut == attribut && value != null && type == "date"){
+            filter.currentValues[0] = value;
+        }
+        else if (filter.attribut == attribut && value != null && !filter.currentValues.includes(value)) {
+          filter.currentValues.push(value);
+          filter.currentRegexValues.push(value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
         }
       });
-
-      // If first filtering for this attribut
-      if (!filteringOnAttributeExist) {
-
-        var filter = {
-          attribut: attribut,
-          values: [value],
-          regexValue: [value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')],
-          type: type
-        };
-        filtersByLayer.push(filter);
-        _currentFilters.set(layerId, filtersByLayer);
-      }
     }
   };
 
@@ -407,28 +466,21 @@ var filter = (function() {
    * @param {String} type The value format to help filtering (text, date, boolean)
    **/
   var _removeFilterElementFromList = function(layerId, attribut, value) {
-    var indexToRemove = -1;
 
-    var filtersByLayer = _currentFilters.get(layerId);
+    var layerFiltersParams = _layersFiltersParams.get(layerId);
     //search if value exist un currentFilters
-    if (filtersByLayer != undefined) {
-      filtersByLayer.forEach(function(filter, index, array) {
-        if (filter.attribut == attribut && (value == null || filter.values == value)) {
-          indexToRemove = index;
-        } else if (filter.attribut == attribut && filter.values.includes(value)) {
-          var indexValue = filter.values.indexOf(value);
-          filter.values.splice(indexValue, 1);
-          filter.regexValue.splice(indexValue, 1);
+    if (layerFiltersParams != undefined) {
+      layerFiltersParams.forEach(function(filter, index, array) {
+        if (filter.attribut == attribut && (value == null || filter.currentValues == value)) {
+          filter.currentValues = [];
+          filter.currentRegexValues = [];
+        } else if (filter.attribut == attribut && filter.currentValues.includes(value)) {
+          var indexValue = filter.currentValues.indexOf(value);
+          filter.currentValues.splice(indexValue, 1);
+          filter.currentRegexValues.splice(indexValue, 1);
         }
       });
-
-      //only remove if exist
-      if (indexToRemove > -1) {
-        filtersByLayer.splice(indexToRemove, 1);
-        _currentFilters.set(layerId, filtersByLayer);
-      }
     }
-
   };
 
   /**
@@ -445,7 +497,6 @@ var filter = (function() {
     var attribut = filtreInformation[2];
     var value = element.value;
 
-    _setMasterFilterDivId(layerId, element.id);
     // checkbox return index of value in _layersParams
     if (type == "filterCheck") {
       var indexValue = filtreInformation[3];
@@ -479,11 +530,11 @@ var filter = (function() {
    **/
   var _getValueFromInfo = function(layerId, attribute, indexValue) {
 
-    var params = _layersParams.get(layerId);
+    var params = _layersFiltersParams.get(layerId);
 
     for (var index in params) {
       if (params[index].attribut == attribute) {
-        return params[index].values[indexValue];
+        return params[index].availableValues[indexValue];
       }
     }
   };
@@ -503,36 +554,38 @@ var filter = (function() {
    **/
   var _filterFeatures = function(layerId) {
 
-    var filtersByLayer = _currentFilters.get(layerId);
+    var _layerFiltersParams = _layersFiltersParams.get(layerId);
     var featuresToBeFiltered = mviewer.getLayer(layerId).layer.getSource().getFeatures();
     var newVisibleFeatures = [];
 
     featuresToBeFiltered.forEach(feature => {
 
-      // filter only if parameters exist and if feature is in visiblefeature list
-      if (filtersByLayer.length > 0) {
-        hideFeature = false;
+      var hideFeature = false;
+      var atLeastOneFilter = false;
 
-        //search if value exist un currentFilters
-        filtersByLayer.forEach(function(filter, index, array) {
+      //search if value exist un currentFilters
+      _layerFiltersParams.forEach(function(filter, index, array) {
 
-          // if feature map filter keep it
-          if (feature.get(filter.attribut) != null && new RegExp(filter.regexValue.join("|")).test(feature.get(filter.attribut))) {
-            feature.setStyle(null);
-          } else {
-            // tag as hide if a least one condition is ok
+        // Only if there is a filter
+        if (filter.currentValues.length > 0) {
+          atLeastOneFilter = true;
+
+          // filter on date is specific, filter.value should be contains beetween to attribute valuse
+          if (filter.type == "date") {
+            // if current date beetwen start and end date
+            if (!_isDateInPeriod(filter.currentValues[0], feature.get(filter.attribut[0]), feature.get(filter.attribut[1]))) {
+              hideFeature = true;
+            }
+          } else if (!_isValueInFeaturePropertie(filter.currentRegexValues, feature.get(filter.attribut))) {
             hideFeature = true;
           }
-
-        });
-        if (hideFeature) {
-          feature.setStyle(new ol.style.Style({}));
-        } else {
-          newVisibleFeatures.push(feature.getId());
         }
-      }
-      // clear filter
-      else {
+
+      });
+      // Hide features
+      if (atLeastOneFilter && hideFeature) {
+        feature.setStyle(new ol.style.Style({}));
+      } else {
         feature.setStyle(null);
         newVisibleFeatures.push(feature.getId());
       }
@@ -544,6 +597,33 @@ var filter = (function() {
   /**
   *
   */
+  var _isDateInPeriod = function(wantedDate, startDate, endDate) {
+    if (_stringToDate(startDate) <= wantedDate && _stringToDate(endDate) >= wantedDate){
+      return true;
+    }
+    return false;
+
+  };
+
+  /**
+  *
+  */
+  var _isValueInFeaturePropertie = function(wantedValues, featurePropertie) {
+    var isInValue = false;
+
+    // If featurePropertie not null, empyt or undefined
+    if (_isEmpty(featurePropertie)) {
+      return isInValue;
+    } else if (new RegExp(wantedValues.join("|")).test(featurePropertie)) {
+      isInValue = true;
+    }
+    return isInValue;
+
+  };
+
+  /**
+   *
+   */
   var _clearFilter = function(id) {
     // get information for elment id ( type-layerid-attribut-index)
     var filtreInformation = id.split("-");
@@ -554,6 +634,22 @@ var filter = (function() {
     _removeFilterElementFromList(layerId, attribut, null);
     _filterFeatures(layerId);
   };
+
+  /**
+   *
+   **/
+  var _isEmpty = function(val) {
+    return (val === undefined || val == null || val.length <= 0) ? true : false;
+  };
+
+  /**
+   *
+   **/
+  var _stringToDate = function(string, format) {
+    var date = new Date(string);
+    return date;
+  };
+
 
   /**
    * Private Method: _clearFilterFeatures

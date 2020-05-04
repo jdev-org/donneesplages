@@ -24,7 +24,7 @@
                 name="Plages de Nouvelle-Aquitaine"
                 type="customlayer"
                 vectorlegend="true"
-                url="apps/donneesplages/customlayers/plage.js"
+                url="apps/donneesplages/customlayers/plage1.js"
                 queryable="true"
                 fields="nom"
                 aliases="Nom"
