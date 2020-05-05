@@ -1,5 +1,5 @@
 {
-  "js": ["js/filter.js"],
+  "js": ["js/filter.js", "js/jquery.easyDrag.min.js"],
   "css": "css/filter.css",
   "html": "filter.html",
   "target": "page-content-wrapper",
