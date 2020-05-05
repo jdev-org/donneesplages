@@ -557,6 +557,7 @@ var filter = (function() {
     var _layerFiltersParams = _layersFiltersParams.get(layerId);
     var featuresToBeFiltered = mviewer.getLayer(layerId).layer.getSource().getFeatures();
     var newVisibleFeatures = [];
+    var extent = ol.extent.createEmpty();
 
     featuresToBeFiltered.forEach(feature => {
 
@@ -588,9 +589,22 @@ var filter = (function() {
       } else {
         feature.setStyle(null);
         newVisibleFeatures.push(feature.getId());
+        // Extend creation if zoomOnFeatures enable
+        if(mviewer.customComponents.filter.config.options.zoomOnFeatures){
+          ol.extent.extend(extent,feature.getGeometry().getExtent());
+        }
       }
     });
     _visibleFeatures.set(layerId, newVisibleFeatures);
+    // zoom on features
+    if(mviewer.customComponents.filter.config.options.zoomOnFeatures){
+
+      if (!ol.extent.isEmpty(extent)) {
+          // add buffer arround extent
+          var bufferedExtent = ol.extent.buffer(extent, ol.extent.getWidth(extent)/2);
+          mviewer.getMap().getView().fit(bufferedExtent);
+      }
+    }
     _manageFilterPanel(layerId);
   };
 
