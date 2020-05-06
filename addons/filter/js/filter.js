@@ -185,7 +185,7 @@ var filter = (function() {
         features.forEach(feature => {
 
           // If feature is visible and value not null
-          if ((visibleFeatures.length == 0 || visibleFeatures.includes(feature.getId())) && feature.get(layerFiltersParams[index].attribut) != null) {
+          if ((visibleFeatures.length == 0 || visibleFeatures.includes(feature.getId())) && !_isEmpty(feature.get(layerFiltersParams[index].attribut))) {
 
             // for date type
             if (layerFiltersParams[index].type == "date") {
