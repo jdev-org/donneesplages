@@ -19,8 +19,8 @@
     <searchparameters bbox="false" localities="false" features="true"/>
 
     <themes mini="true" legendmini="true">
-        <theme name="Plages" collapsed="true" id="plage1" icon="fas fa-umbrella-beach">
-            <layer id="plage1"
+        <theme name="Plages" collapsed="true" id="plage" icon="fas fa-umbrella-beach">
+            <layer id="plage"
                 name="Plages de Nouvelle-Aquitaine"
                 type="customlayer"
                 vectorlegend="true"

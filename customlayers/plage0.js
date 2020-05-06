@@ -6,8 +6,8 @@
 
   var todayText = mm + '/' + dd + '/' + yyyy;
 
-  mviewer.customLayers.plage = {};
-  mviewer.customLayers.plage.legend = { items: [] };
+  mviewer.customLayers.plage1 = {};
+  mviewer.customLayers.plage1.legend = { items: [] };
 
   var styleOuvert = [new ol.style.Style({
     image: new ol.style.Circle({
@@ -35,20 +35,20 @@
     })
   })];
 
-  mviewer.customLayers.plage.legend.items.push({
+  mviewer.customLayers.plage1.legend.items.push({
     styles: styleOuvert,
     label: "Surveilance ouverte",
     geometry: "Point"
   });
-  mviewer.customLayers.plage.legend.items.push({
+  mviewer.customLayers.plage1.legend.items.push({
     styles: styleFerme,
     label: "Surveillance non ouverte",
     geometry: "Point"
   });
 
-  mviewer.customLayers.plage.layer = new ol.layer.Vector({
+  mviewer.customLayers.plage1.layer = new ol.layer.Vector({
     source: new ol.source.Vector({
-      url: "apps/donneesplages/data/plage_fme.json",
+      url: "apps/donneesplages/data/sample.json",
       format: new ol.format.GeoJSON()
     }),
     style: function(feature, resolution) {
@@ -61,5 +61,5 @@
       return stl;
     }
   });
-  mviewer.customLayers.plage.handle = false;
+  mviewer.customLayers.plage1.handle = false;
 }

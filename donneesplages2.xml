@@ -18,8 +18,8 @@
     <olscompletion url="https://api-adresse.data.gouv.fr/search/" type="ban" attribution="API adresse.data.gouv.fr"/>
     <searchparameters bbox="false" localities="false" features="true"/>
 
-    <themes>
-        <theme name="Plages"  collapsed="false" id="plage" icon="fas fa-umbrella-beach">
+    <themes mini="true" legendmini="true">
+        <theme name="Plages" collapsed="true" id="plage" icon="fas fa-umbrella-beach">
             <layer id="plage"
                 name="Plages de Nouvelle-Aquitaine"
                 type="customlayer"
@@ -36,6 +36,7 @@
                 tooltip="true"
                 tooltipcontent="{{nom_plage}}"
                 attribution="GIP Littoral, SIRTAQUI, Charente Tourisme">
+                <!-- addons bootstrapatable needed for this template -->
                 <template url="apps/donneesplages/templates/plage.mst"></template>
             </layer>
 		</theme>
@@ -46,5 +47,7 @@
         <extension type="component" id="bootstraptable" path="apps/donneesplages/addons" />
         <!-- Enlarge left feature panel -->
         <extension type="component" id="styleinfo" path="apps/donneesplages/addons" />
+        <!-- Advanced fitler -->
+        <extension type="component" id="filter" path="apps/donneesplages/addons" />
     </extensions>
 </config>
