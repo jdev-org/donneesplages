@@ -46,6 +46,9 @@ var filter = (function() {
           $('#advancedFilter').easyDrag({
             'handle': 'h2'
           });
+          $('[data-toggle="filter-tooltip"]').tooltip({
+            placement : 'top'
+          });
         });
       }
 
@@ -55,8 +58,8 @@ var filter = (function() {
 
       //Add filter button to toolstoolbar
       var button = [
-        '<button class="mv-modetools btn btn-default btn-raised" href="#"',
-        ' onclick="filter.toggle();"  id="filterbtn" title="Filtrer" i18n="filter.button.main"',
+        '<button id="filterbtn" class="btn btn-default btn-raised" ',
+        ' onclick="filter.toggle();"  title="Filtrer les données" i18n="tbar.right.filter"',
         ' tabindex="115" accesskey="f">',
         '<span class="glyphicon glyphicon-filter" aria-hidden="true"></span>',
         '</button>'
@@ -160,7 +163,7 @@ var filter = (function() {
    * @param {string} layerId The layer id to be filter
    *
    **/
-  var _updateFeaturesDistinctValues = function(layerId) {
+  var _updateFeaturesDistinctValues = function(layerId) {// Parse all params to create panel
 
     // for given attributes array update values
     var layerFiltersParams = _layersFiltersParams.get(layerId);
@@ -245,7 +248,8 @@ var filter = (function() {
         '<div class="form-check mb-2 mr-sm-2">',
         '<div class="form-check filter-legend">',
         '<legend > ' + filterParams.label + ' </legend>',
-        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-remove" onclick="filter.clearFilter(this.id);"></span>',
+        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-trash" onclick="filter.clearFilter(this.id);"',
+        ' data-toggle="filter-tooltip" data-original-title="Réinitaliser ce filtre"></span>',
         '</div>',
         '<div id ="' + id + '" class="form-check">'
       ];
@@ -293,7 +297,8 @@ var filter = (function() {
         '<div class="form-check mb-2 mr-sm-2">',
         '<div class="form-check filter-legend">',
         '<legend > ' + filterParams.label + ' </legend>',
-        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-remove" onclick="filter.clearFilter(this.id);"></span>',
+        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-trash" onclick="filter.clearFilter(this.id);"',
+        ' data-toggle="filter-tooltip" data-original-title="Réinitaliser ce filtre"></span>',
         '</div>',
         '<div id ="' + id + '" class="form-check">'
       ];
@@ -350,7 +355,8 @@ var filter = (function() {
         '<div class="form-check mb-2 mr-sm-2">',
         '<div class="form-check filter-legend">',
         '<legend > ' + params.label + ' </legend>',
-        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-remove"></span>',
+        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-trash"',
+        ' data-toggle="filter-tooltip" data-original-title="Réinitaliser ce filtre"></span>',
         '</div>',
       ];
       _text.push('<input type="text" value="" data-role="tagsinput" id="' + id + '" class="form-control">');
@@ -399,10 +405,16 @@ var filter = (function() {
     // for type date, two parameters are availables
     // create unique id with first parameter
     var id = "filterDate-" + layerId + "-" + params.attribut[0];
+    var clearId = "filterClear-" + layerId + "-" + params.attribut;
+
     if (!$('#' + id).length) {
       var _datePicker = [
         '<div class="form-group form-group-timer mb-2 mr-sm-2">',
-        '<legend> ' + params.label + ' </legend>'
+        '<div class="form-check filter-legend">',
+        '<legend > ' + params.label + ' </legend>',
+        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-trash',
+        ' data-toggle="filter-tooltip" data-original-title="Réinitaliser ce filtre"></span>',
+        '</div>',
       ];
       _datePicker.push('<input type="text" class="form-control" id="' + id + '" />');
       _datePicker.push('</div>');
@@ -449,7 +461,8 @@ var filter = (function() {
         '<div class="form-group mb-2 mr-sm-2">',
         '<div class="form-check filter-legend">',
         '<legend > ' + params.label + ' </legend>',
-        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-remove"></span>',
+        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-trash"',
+        ' data-toggle="filter-tooltip" data-original-title="Réinitaliser ce filtre"></span>',
         '</div>',
         '<select id="' + id + '" class="form-control" onchange="filter.onValueChange(this)">'
       ];
@@ -724,24 +737,28 @@ var filter = (function() {
    **/
   var _clearFilterFeatures = function(layerId) {
 
-    var featuresToUnFiltered = mviewer.getLayer(layerId).layer.getSource().getFeatures();
     _visibleFeatures.set(layerId, []);
-    _currentFilters.set(layerId, {});
-    featuresToUnFiltered.forEach(feature => {
-      // apply initial style
-      feature.setStyle(null);
-    });
-    _manageFilterPanel(layerId);
+
+    layerFiltersParams = _layersFiltersParams.get(layerId);
+    // Parse all params to create panel
+    for (var index in layerFiltersParams) {
+
+      // init current filters values
+      layerFiltersParams[index].currentValues = [];
+      layerFiltersParams[index].currentRegexValues = [];
+    }
+    _filterFeatures(layerId);
   };
 
   /**
    * Private Method: _clearAllFilter
    *
+   * reset all feature for all layer
    **/
   var _clearAllFilter = function() {
-
     // Parse all layer to get params
-    for (var [layerId, params] of _layersParams) {
+    for (var [layerId, params] of _layersFiltersParams) {
+
       _clearFilterFeatures(layerId);
     }
   };
@@ -752,6 +769,7 @@ var filter = (function() {
     filterFeatures: _filterFeatures,
     onValueChange: _onValueChange,
     clearFilter: _clearFilter,
+    clearAllFilter: _clearAllFilter,
     selectLayer: _selectLayer
   };
 

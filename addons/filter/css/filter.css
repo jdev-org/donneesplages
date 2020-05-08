@@ -6,7 +6,7 @@
   top: 220px;
   left: 60px;
   padding: 5px 15px 2px;
-  max-width: 300px;
+  max-width: 250px;
 }
 
 .advancedFilter h2 {
@@ -44,7 +44,14 @@
   position: relative;
 }
 
-.filter-legend .glyphicon {
+.filter-legend .glyphicon-trash {
+  position: absolute;
+  cursor: pointer;
+  right: 30px;
+  top: 4px;
+}
+
+.filter-legend .glyphicon-remove {
   position: absolute;
   cursor: pointer;
   right: 10px;
