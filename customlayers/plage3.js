@@ -121,13 +121,15 @@ class ClusterByAttribut extends ol.source.Cluster {
     this.attribut = options.attribut;
   }
 
+  refresh() {
+    this.clear();
+   //this.cluster();
+   this.addFeatures(this.features);
+ }
+
   cluster() {
 
-    if (this.resolution === undefined || !this.source) {
-      return;
-    }
     const extent = ol.extent.createEmpty();
-    const mapDistance = this.distance * this.resolution;
     const features = this.source.getFeatures();
 
     /**
@@ -135,26 +137,26 @@ class ClusterByAttribut extends ol.source.Cluster {
      */
     const clustered = {};
     const attribut = this.attribut;
+    const distance = this.distance;
 
 
     for (let i = 0, ii = features.length; i < ii; i++) {
       const feature = features[i];
       const value = feature.get(attribut);
-      console.log("create cluster on attribut : " + this.attribut + " for value : " + value);
+      console.log("create cluster on attribut : " + this.attribut + " for value : " + value + " and distance : " + distance) ;
 
+      // createOnly on cluster
+      if(distance == 0){
+        this.features.push(this.createCluster([feature]));
+      }
       // if feature not already in cluster
-      if (!(ol.util.getUid(feature) in clustered)) {
-        const geometry = this.geometryFunction(feature);
-        if (geometry && attribut != undefined) {
-          //const coordinates = geometry.getCoordinates();
-          //ol.extent.createOrUpdateFromCoordinate(coordinates, extent);
-          //ol.extent.buffer(extent, mapDistance, extent);
+      else if (!(ol.util.getUid(feature) in clustered)) {
 
-          let neighbors = this.source.getFeatures();
+          let featuresForCluster = this.source.getFeatures();
 
-          neighbors = neighbors.filter(function(neighbor) {
-            const uid = ol.util.getUid(neighbor);
-            if (!(uid in clustered) && value == neighbor.get(attribut)) {
+          featuresForCluster = featuresForCluster.filter(function(featureForCluster) {
+            const uid = ol.util.getUid(featureForCluster);
+            if (!(uid in clustered) && value == featureForCluster.get(attribut)) {
               clustered[uid] = true;
               return true;
             } else {
@@ -162,8 +164,8 @@ class ClusterByAttribut extends ol.source.Cluster {
             }
           });
 
-          this.features.push(this.createCluster(neighbors));
-        }
+          this.features.push(this.createCluster(featuresForCluster));
+
       }
     }
   }
@@ -194,6 +196,7 @@ let layer = new ol.layer.Vector({
 
 let handle = function(clusters, views) {
 
+  console.log("handle");
     // Open panel for all feature
     if (clusters.length > 0 && clusters[0].properties.features) {
         var features = clusters[0].properties.features;
@@ -230,8 +233,12 @@ let handle = function(clusters, views) {
             "theme_icon": l.icon,
             "html": html
         });
-        var bufferedExtent = ol.extent.buffer(extent, ol.extent.getWidth(extent) / 2);
-        mviewer.getMap().getView().fit(bufferedExtent);
+
+        // Zoom only if multiple feature
+        if(clusters[0].properties.features.length > 1){
+          var bufferedExtent = ol.extent.buffer(extent, ol.extent.getWidth(extent) / 2);
+          mviewer.getMap().getView().fit(bufferedExtent);
+        }
     }
 
 };
@@ -241,7 +248,7 @@ new CustomLayer("plage", layer, legend, handle);
 mviewer.getMap().getView().on('change:resolution', function(evt) {
   var view = evt.target;
 
-  if (view.getZoom() >= 9 && layer.getSource().getDistance() > 0) {
+  if (view.getZoom() >= 9) {
     layer.getSource().setDistance(0);
   } else {
     layer.getSource().setDistance(50);
