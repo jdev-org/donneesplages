@@ -192,7 +192,51 @@ let layer = new ol.layer.Vector({
   style: clusterStyle
 });
 
-new CustomLayer("plage", layer, legend);
+let handle = function(clusters, views) {
+
+    // Open panel for all feature
+    if (clusters.length > 0 && clusters[0].properties.features) {
+        var features = clusters[0].properties.features;
+        var elements = [];
+        var extent = ol.extent.createEmpty();
+
+        var l = mviewer.getLayer("plage");
+        features.forEach(function(feature, i) {
+            ol.extent.extend(extent, feature.getGeometry().getExtent());
+            elements.push({
+                properties: feature.getProperties()
+            });
+        });
+        var html;
+        if (l.template) {
+            html = info.templateHTMLContent(elements, l);
+        } else {
+            html = info.formatHTMLContent(elements, l);
+        }
+        var panel = "";
+        if (configuration.getConfiguration().mobile) {
+            panel = "modal-panel";
+        } else {
+            panel = "right-panel";
+        }
+        var view = views[panel];
+        view.layers.push({
+            "id": view.layers.length + 1,
+            "firstlayer": true,
+            "manyfeatures": (features.length > 1),
+            "nbfeatures": features.length,
+            "name": l.name,
+            "layerid": "cluster",
+            "theme_icon": l.icon,
+            "html": html
+        });
+        var bufferedExtent = ol.extent.buffer(extent, ol.extent.getWidth(extent) / 2);
+        mviewer.getMap().getView().fit(bufferedExtent);
+    }
+
+};
+
+new CustomLayer("plage", layer, legend, handle);
 
 mviewer.getMap().getView().on('change:resolution', function(evt) {
   var view = evt.target;
