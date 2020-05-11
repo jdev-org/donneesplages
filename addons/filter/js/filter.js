@@ -169,7 +169,8 @@ var filter = (function() {
     var layerFiltersParams = _layersFiltersParams.get(layerId);
     var visibleFeatures = _visibleFeatures.get(layerId) == undefined ? [] : _visibleFeatures.get(layerId);
 
-    var features = mviewer.getLayer(layerId).layer.getSource().getFeatures();
+    var source = mviewer.getLayer(layerId).layer.getSource();
+    var features = source instanceof ol.source.Cluster ? source.getSource().getFeatures() : source.getFeatures();
 
     // Parse all params to create panel
     for (var index in layerFiltersParams) {
@@ -616,7 +617,10 @@ var filter = (function() {
   var _filterFeatures = function(layerId) {
 
     var _layerFiltersParams = _layersFiltersParams.get(layerId);
-    var featuresToBeFiltered = mviewer.getLayer(layerId).layer.getSource().getFeatures();
+
+    var source = mviewer.getLayer(layerId).layer.getSource();
+    // Check if ClusterLayer
+    var featuresToBeFiltered = source instanceof ol.source.Cluster ? source.getSource().getFeatures() : source.getFeatures();
     var newVisibleFeatures = [];
 
     // if zoomOnFeatures enable create an empty extent
