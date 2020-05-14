@@ -123,9 +123,9 @@ class ClusterByAttribut extends ol.source.Cluster {
 
   refresh() {
     this.clear();
-   //this.cluster();
-   this.addFeatures(this.features);
- }
+    //this.cluster();
+    this.addFeatures(this.features);
+  }
 
   cluster() {
 
@@ -143,28 +143,28 @@ class ClusterByAttribut extends ol.source.Cluster {
     for (let i = 0, ii = features.length; i < ii; i++) {
       const feature = features[i];
       const value = feature.get(attribut);
-      console.log("create cluster on attribut : " + this.attribut + " for value : " + value + " and distance : " + distance) ;
+      console.log("create cluster on attribut : " + this.attribut + " for value : " + value + " and distance : " + distance);
 
       // createOnly on cluster
-      if(distance == 0){
+      if (distance == 0) {
         this.features.push(this.createCluster([feature]));
       }
       // if feature not already in cluster
       else if (!(ol.util.getUid(feature) in clustered)) {
 
-          let featuresForCluster = this.source.getFeatures();
+        let featuresForCluster = this.source.getFeatures();
 
-          featuresForCluster = featuresForCluster.filter(function(featureForCluster) {
-            const uid = ol.util.getUid(featureForCluster);
-            if (!(uid in clustered) && value == featureForCluster.get(attribut)) {
-              clustered[uid] = true;
-              return true;
-            } else {
-              return false;
-            }
-          });
+        featuresForCluster = featuresForCluster.filter(function(featureForCluster) {
+          const uid = ol.util.getUid(featureForCluster);
+          if (!(uid in clustered) && value == featureForCluster.get(attribut)) {
+            clustered[uid] = true;
+            return true;
+          } else {
+            return false;
+          }
+        });
 
-          this.features.push(this.createCluster(featuresForCluster));
+        this.features.push(this.createCluster(featuresForCluster));
 
       }
     }
@@ -194,52 +194,56 @@ let layer = new ol.layer.Vector({
   style: clusterStyle
 });
 
+/**
+* Specific handle
+* If several features in cluster zoom on it
+* else open info panel
+*/
 let handle = function(clusters, views) {
 
+  const layerId = "plage";
   console.log("handle");
-    // Open panel for all feature
-    if (clusters.length > 0 && clusters[0].properties.features) {
-        var features = clusters[0].properties.features;
-        var elements = [];
-        var extent = ol.extent.createEmpty();
+  var l = mviewer.getLayer(layerId);
+  // Zoom only if multiple feature
+  if (clusters.length > 0 && clusters[0].properties.features.length > 1) {
+    var extent = ol.extent.createEmpty();
 
-        var l = mviewer.getLayer("plage");
-        features.forEach(function(feature, i) {
-            ol.extent.extend(extent, feature.getGeometry().getExtent());
-            elements.push({
-                properties: feature.getProperties()
-            });
-        });
-        var html;
-        if (l.template) {
-            html = info.templateHTMLContent(elements, l);
-        } else {
-            html = info.formatHTMLContent(elements, l);
-        }
-        var panel = "";
-        if (configuration.getConfiguration().mobile) {
-            panel = "modal-panel";
-        } else {
-            panel = "right-panel";
-        }
-        var view = views[panel];
-        view.layers.push({
-            "id": view.layers.length + 1,
-            "firstlayer": true,
-            "manyfeatures": (features.length > 1),
-            "nbfeatures": features.length,
-            "name": l.name,
-            "layerid": "cluster",
-            "theme_icon": l.icon,
-            "html": html
-        });
+    clusters[0].properties.features.forEach(function(feature, i) {
+      ol.extent.extend(extent, feature.getGeometry().getExtent());
+    });
 
-        // Zoom only if multiple feature
-        if(clusters[0].properties.features.length > 1){
-          var bufferedExtent = ol.extent.buffer(extent, ol.extent.getWidth(extent) / 2);
-          mviewer.getMap().getView().fit(bufferedExtent);
-        }
+    var bufferedExtent = ol.extent.buffer(extent, ol.extent.getWidth(extent) / 2);
+    mviewer.getMap().getView().fit(bufferedExtent);
+  } else if (clusters.length > 0 && clusters[0].properties.features) {
+    var elements = [];
+
+    clusters[0].properties.features.forEach(function(feature, i) {
+      elements.push({
+        properties: feature.getProperties()
+      });
+    });
+    var html;
+    if (l.template) {
+      html = info.templateHTMLContent(elements, l);
+    } else {
+      html = info.formatHTMLContent(elements, l);
     }
+    var panel = "";
+    if (configuration.getConfiguration().mobile) {
+      panel = "modal-panel";
+    } else {
+      panel = "right-panel";
+    }
+    var view = views[panel];
+    view.layers.push({
+      "id": view.layers.length + 1,
+      "firstlayer": true,
+      "name": l.name,
+      "layerid": layerId,
+      "theme_icon": l.icon,
+      "html": html
+    });
+  }
 
 };
 
