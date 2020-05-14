@@ -150,7 +150,7 @@ var filter = (function() {
   };
 
   /**
-   *
+   * Select wanted layer in filter panel
    */
   var _selectLayer = function(element) {
     $("#advancedFilter-" + _currentSelectedLayer).hide();
@@ -191,7 +191,6 @@ var filter = (function() {
             feature.get("features").forEach(feature => {
               _checkDistinctValues(feature, visibleFeatures, layerFiltersParams[index]);
             });
-
           } else {
             _checkDistinctValues(feature, visibleFeatures, layerFiltersParams[index]);
           }
@@ -203,28 +202,32 @@ var filter = (function() {
   };
 
   /**
-   * check
+   * Check in feature properties if value is already listed,
+   * if not listed it
+   * @param {ol.Feature} feature the current feature
+   * @param {Array} visibleFeatures array of visibile feature uid
+   * @param {Object} filtersParams filter params information
    */
   var _checkDistinctValues = function(feature, visibleFeatures, filtersParams) {
 
     // If feature is visible and value not null
-    if ((visibleFeatures.length == 0 || visibleFeatures.includes(ol.util.getUid(feature))) && !_isEmpty(feature.get(filtersParams.attribut))) {
+    if (visibleFeatures.length == 0 || visibleFeatures.includes(ol.util.getUid(feature))) {
 
       // for date type
       if (filtersParams.type == "date") {
 
-        if (!_isEmpty(filtersParams.attribut[0]) && !_isEmpty(filtersParams.attribut[0])) {
+        if (!_isEmpty(feature.get(filtersParams.attribut[0])) && !_isEmpty(feature.get(filtersParams.attribut[1]))) {
           var startDate = _stringToDate(feature.get(filtersParams.attribut[0]));
           var endDate = _stringToDate(feature.get(filtersParams.attribut[1]));
 
-          if (filtersParams.availableValues.length == 0 || startDate <= filtersParams.availableValues[O]) {
-            filtersParams.availableValues[O] = startDate;
+          if (typeof filtersParams.availableValues[1] === "undefined" || startDate <= filtersParams.availableValues[1]) {
+            filtersParams.availableValues[1] = startDate;
           }
-          if (filtersParams.availableValues.length == 0 || endDate <= filtersParams.availableValues[O]) {
-            filtersParams.availableValues[1] = endDate;
+          if (typeof filtersParams.availableValues[0] === "undefined" || endDate >= filtersParams.availableValues[0]) {
+            filtersParams.availableValues[0] = endDate;
           }
         }
-      } else {
+      } else if (!_isEmpty(feature.get(filtersParams.attribut))){
         // if needed, split values with ; Feature values can be one String separate by ;
         // TODO see if separator need to be put in config
         var results = (feature.get(filtersParams.attribut)).split(';');
@@ -419,7 +422,7 @@ var filter = (function() {
     // for type date, two parameters are availables
     // create unique id with first parameter
     var id = "filterDate-" + layerId + "-" + params.attribut[0];
-    var clearId = "filterClear-" + layerId + "-" + params.attribut;
+    var clearId = "filterClear-" + layerId + "-" + params.attribut[0];
 
     if (!$('#' + id).length) {
       var _datePicker = [
@@ -433,14 +436,22 @@ var filter = (function() {
       _datePicker.push('<input type="text" class="form-control" id="' + id + '" />');
       _datePicker.push('</div>');
       $("#" + divId).append(_datePicker.join(""));
+
+      // manage datepicker external clear
+      $("#" + clearId).click(function(e) {
+        e.preventDefault();
+        $("#" + id).datepicker('setDate', null);
+        _removeFilterElementFromList(layerId, params.attribut, null);
+        _filterFeatures(layerId);
+      });
     }
 
     $("#" + id).datepicker({
       format: "yyyy-mm-dd",
       language: "fr",
       autoclose: true,
-      startDate: params.availableValues[0],
-      endDate: params.availableValues[1],
+      startDate: params.availableValues[1],
+      endDate: params.availableValues[0],
       clearBtn: true,
       todayHighlight: true
     });

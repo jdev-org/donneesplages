@@ -16,12 +16,19 @@
   font-family: 'roboto_regular', Arial, Sans-serif;
   margin-top: 0px;
   text-align: left;
-
 }
-.advancedFilter .glyphicon-refresh {
+
+.advancedFilter h2 .glyphicon-refresh {
   position: absolute;
   cursor: pointer;
   right: 30px;
+  top: 4px;
+}
+
+.advancedFilter h2 .glyphicon-remove {
+  position: absolute;
+  cursor: pointer;
+  right: 10px;
   top: 4px;
 }
 
@@ -59,11 +66,5 @@
   cursor: pointer;
   right: 30px;
   top: 4px;
-}
-
-.filter-legend .glyphicon-remove {
-  position: absolute;
-  cursor: pointer;
-  right: 10px;
-  top: 4px;
+  color: #9DE0EF;
 }
