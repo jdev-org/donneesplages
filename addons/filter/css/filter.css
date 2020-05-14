@@ -19,6 +19,7 @@
 .advancedFilter label {
   margin-right: 2px;
   margin-left: 2px;
+  padding: .3em .6em .3em;
 }
 
 .advancedFilter legend {
