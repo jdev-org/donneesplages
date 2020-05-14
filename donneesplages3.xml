@@ -33,7 +33,7 @@
                 searchengine="fuse"
                 fusesearchkeys="nom_plage"
                 fusesearchresult="{{nom_plage}} - {{commune}}"
-                tooltip="true"
+                tooltip="false"
                 tooltipcontent="{{nom_plage}} - {{commune}}"
                 attribution="GIP Littoral, SIRTAQUI, Charente Tourisme">
                 <!-- addons bootstrapatable needed for this template -->

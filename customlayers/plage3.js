@@ -65,7 +65,8 @@ class ClusterByAttribut extends ol.source.Cluster {
 
       // createOnly on cluster
       if (!this.isCluster || this.isFilter) {
-        this.features.push(feature);
+        //this.features.push(feature);
+          this.features.push(this.createCluster([feature]));
       }
       // if feature not already in cluster
       else if (!(ol.util.getUid(feature) in clustered)) {
@@ -184,14 +185,14 @@ var layerStyle = function(feature) {
 
   console.log("load Style");
   // if cluster
-  if (feature.get('features')) {
+  if (feature.get('features').length>1) {
     var size = feature.get('features').length;
     var max_radius = 40;
     var max_value = 500;
     var radius = 10 + Math.sqrt(size) * (max_radius / Math.sqrt(max_value));
     var radius2 = radius * 80 / 100;
     return styleCluster(radius, radius2, size);
-  } else if (feature.get('date_ouverture') >= todayText) {
+  } else if (feature.get('features')[0].get('date_ouverture') >= todayText) {
     return stylePlageOuverte;
   } else {
     return stylePlageFermee;
@@ -248,7 +249,7 @@ let handle = function(clusters, views) {
 
     clusters[0].properties.features.forEach(function(feature, i) {
       elements.push({
-        properties: feature.getProperties()
+         properties: feature.getProperties()
       });
     });
     var html;
@@ -267,6 +268,8 @@ let handle = function(clusters, views) {
     view.layers.push({
       "id": view.layers.length + 1,
       "firstlayer": true,
+      "manyfeatures": (clusters[0].properties.features.length > 1),
+      "nbfeatures": clusters[0].properties.features.length,
       "name": l.name,
       "layerid": layerId,
       "theme_icon": l.icon,
@@ -291,9 +294,9 @@ mviewer.getMap().getView().on('change:resolution', function(evt) {
   // switch to cluster or no cluster mode depending on zoom level
   if (view.getZoom() >= 9) {
     layer.getSource().setIsCluster(false);
-    clPlage.config.tooltipcontent = initialTooltipContent;
+  //  clPlage.config.tooltipcontent = initialTooltipContent;
   } else {
     layer.getSource().setIsCluster(true);
-    clPlage.config.tooltipcontent = clusterTootipContent;
+  //  clPlage.config.tooltipcontent = clusterTootipContent;
   }
 });
