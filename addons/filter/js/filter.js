@@ -37,18 +37,23 @@ var filter = (function() {
       nbLayers++;
       if (nbLayers == 1) {
         _currentSelectedLayer = layerId;
+
         // wait until at least one layer is load before create filter panel
         mviewer.getLayer(layerId).layer.once('change', function(e) {
           _manageFilterPanel();
-          if (mviewer.customComponents.filter.config.options.open) {
+          _filterFeatures(layerId);
+          
+          if (mviewer.customComponents.filter.config.options.open && window.innerWidth > 360) {
             $("#advancedFilter").show();
           }
+
           $('#advancedFilter').easyDrag({
             'handle': 'h2'
           });
           $('[data-toggle="filter-tooltip"]').tooltip({
             placement: 'top'
           });
+
         });
       }
 
@@ -77,7 +82,8 @@ var filter = (function() {
 
     // show or hide filter panel
     if ($("#advancedFilter").is(':visible')) {
-      $('#filterbtn').removeClass('btn-default.focus');
+      $('#filterbtn').removeClass('btn.focus');
+      $('#filterbtn').removeClass('btn.active');
       $("#advancedFilter").hide();
     } else {
       $("#advancedFilter").show();
@@ -814,4 +820,3 @@ var filter = (function() {
 })();
 
 new CustomComponent("filter", filter.init);
-//filter.configFilterableLayer();
