@@ -36,7 +36,7 @@ var filter = (function() {
 
       nbLayers++;
       if (nbLayers == 1) {
-        _currentSelectedLayer=layerId;
+        _currentSelectedLayer = layerId;
         // wait until at least one layer is load before create filter panel
         mviewer.getLayer(layerId).layer.once('change', function(e) {
           _manageFilterPanel();
@@ -47,7 +47,7 @@ var filter = (function() {
             'handle': 'h2'
           });
           $('[data-toggle="filter-tooltip"]').tooltip({
-            placement : 'top'
+            placement: 'top'
           });
         });
       }
@@ -137,7 +137,7 @@ var filter = (function() {
           _manageDateFilter(destinationDivId, layerId, params[index]);
         }
       }
-      if(layerId != _currentSelectedLayer){
+      if (layerId != _currentSelectedLayer) {
         $("#" + destinationDivId).hide();
       }
       indexLayerId++;
@@ -163,7 +163,7 @@ var filter = (function() {
    * @param {string} layerId The layer id to be filter
    *
    **/
-  var _updateFeaturesDistinctValues = function(layerId) {// Parse all params to create panel
+  var _updateFeaturesDistinctValues = function(layerId) { // Parse all params to create panel
 
     // for given attributes array update values
     var layerFiltersParams = _layersFiltersParams.get(layerId);
@@ -172,13 +172,12 @@ var filter = (function() {
     var source = mviewer.getLayer(layerId).layer.getSource();
     var features = source instanceof ol.source.Cluster ? source.getSource().getFeatures() : source.getFeatures();
 
-    // Parse all params to create panel
+    // Parse all params to get wanted values
     for (var index in layerFiltersParams) {
 
       // init current filters values
       layerFiltersParams[index].currentValues = layerFiltersParams[index].currentValues ? layerFiltersParams[index].currentValues : [];
       layerFiltersParams[index].currentRegexValues = layerFiltersParams[index].currentRegexValues ? layerFiltersParams[index].currentRegexValues : [];
-
 
       // undefined if first loop
       if (layerFiltersParams[index].availableValues == undefined || layerFiltersParams[index].updateOnChange) {
@@ -187,44 +186,58 @@ var filter = (function() {
         layerFiltersParams[index].availableValues = [];
 
         features.forEach(feature => {
+          // cluster case
+          if (feature.get("features")) {
+            feature.get("features").forEach(feature => {
+              _checkDistinctValues(feature, visibleFeatures, layerFiltersParams[index]);
+            });
 
-          // If feature is visible and value not null
-          if ((visibleFeatures.length == 0 || visibleFeatures.includes(feature.getId())) && !_isEmpty(feature.get(layerFiltersParams[index].attribut))) {
-
-            // for date type
-            if (layerFiltersParams[index].type == "date") {
-
-              if (!_isEmpty(layerFiltersParams[index].attribut[0]) && !_isEmpty(layerFiltersParams[index].attribut[0])) {
-                var startDate = _stringToDate(feature.get(layerFiltersParams[index].attribut[0]));
-                var endDate = _stringToDate(feature.get(layerFiltersParams[index].attribut[1]));
-
-                if (layerFiltersParams[index].availableValues.length == 0 || startDate <= layerFiltersParams[index].availableValues[O]) {
-                  layerFiltersParams[index].availableValues[O] = startDate;
-                }
-                if (layerFiltersParams[index].availableValues.length == 0 || endDate <= layerFiltersParams[index].availableValues[O]) {
-                  layerFiltersParams[index].availableValues[1] = endDate;
-                }
-              }
-            } else {
-              // if needed, split values with ; Feature values can be one String separate by ;
-              // TODO see if separator need to be put in config
-              var results = (feature.get(layerFiltersParams[index].attribut)).split(';');
-
-              results.forEach(result => {
-
-                // if new value
-                if (layerFiltersParams[index].availableValues.indexOf(result) < 0) {
-                  layerFiltersParams[index].availableValues.push(result);
-                }
-              });
-            }
+          } else {
+            _checkDistinctValues(feature, visibleFeatures, layerFiltersParams[index]);
           }
         });
+
         layerFiltersParams[index].availableValues.sort();
       }
-
     }
+  };
 
+  /**
+   * check
+   */
+  var _checkDistinctValues = function(feature, visibleFeatures, filtersParams) {
+
+    // If feature is visible and value not null
+    if ((visibleFeatures.length == 0 || visibleFeatures.includes(ol.util.getUid(feature))) && !_isEmpty(feature.get(filtersParams.attribut))) {
+
+      // for date type
+      if (filtersParams.type == "date") {
+
+        if (!_isEmpty(filtersParams.attribut[0]) && !_isEmpty(filtersParams.attribut[0])) {
+          var startDate = _stringToDate(feature.get(filtersParams.attribut[0]));
+          var endDate = _stringToDate(feature.get(filtersParams.attribut[1]));
+
+          if (filtersParams.availableValues.length == 0 || startDate <= filtersParams.availableValues[O]) {
+            filtersParams.availableValues[O] = startDate;
+          }
+          if (filtersParams.availableValues.length == 0 || endDate <= filtersParams.availableValues[O]) {
+            filtersParams.availableValues[1] = endDate;
+          }
+        }
+      } else {
+        // if needed, split values with ; Feature values can be one String separate by ;
+        // TODO see if separator need to be put in config
+        var results = (feature.get(filtersParams.attribut)).split(';');
+
+        results.forEach(result => {
+
+          // if new value
+          if (filtersParams.availableValues.indexOf(result) < 0) {
+            filtersParams.availableValues.push(result);
+          }
+        });
+      }
+    }
   };
 
   /**
@@ -622,10 +635,11 @@ var filter = (function() {
     // Check if ClusterLayer
     var featuresToBeFiltered = source instanceof ol.source.Cluster ? source.getSource().getFeatures() : source.getFeatures();
     var newVisibleFeatures = [];
+    var extent;
 
     // if zoomOnFeatures enable create an empty extent
     if (mviewer.customComponents.filter.config.options.zoomOnFeatures) {
-      var extent = ol.extent.createEmpty();
+      extent = ol.extent.createEmpty();
     }
 
     featuresToBeFiltered.forEach(feature => {
@@ -655,9 +669,13 @@ var filter = (function() {
       // Hide features
       if (atLeastOneFilter && hideFeature) {
         feature.setStyle(new ol.style.Style({}));
+        // update cluster information to avoir clustering
+        if (source instanceof ol.source.Cluster) {
+          source.setIsFilter(true);
+        }
       } else {
         feature.setStyle(null);
-        newVisibleFeatures.push(feature.getId());
+        newVisibleFeatures.push(ol.util.getUid(feature));
         // Extend creation if zoomOnFeatures enable
         if (mviewer.customComponents.filter.config.options.zoomOnFeatures) {
           ol.extent.extend(extent, feature.getGeometry().getExtent());
@@ -666,14 +684,14 @@ var filter = (function() {
     });
     _visibleFeatures.set(layerId, newVisibleFeatures);
     // zoom on features
-    if (mviewer.customComponents.filter.config.options.zoomOnFeatures) {
+    if (mviewer.customComponents.filter.config.options.zoomOnFeatures && !ol.extent.isEmpty(extent)) {
 
-      if (!ol.extent.isEmpty(extent)) {
-        // add buffer arround extent
-        var bufferedExtent = ol.extent.buffer(extent, ol.extent.getWidth(extent) / 2);
-        mviewer.getMap().getView().fit(bufferedExtent);
-      }
+      // add buffer arround extent
+      var bufferedExtent = ol.extent.buffer(extent, ol.extent.getWidth(extent) / 2);
+      mviewer.getMap().getView().fit(bufferedExtent);
     }
+
+
     _manageFilterPanel(layerId);
   };
 
@@ -762,8 +780,13 @@ var filter = (function() {
   var _clearAllFilter = function() {
     // Parse all layer to get params
     for (var [layerId, params] of _layersFiltersParams) {
-
       _clearFilterFeatures(layerId);
+
+      var source = mviewer.getLayer(layerId).layer.getSource();
+      // update cluster information
+      if (source instanceof ol.source.Cluster) {
+        source.setIsFilter(false);
+      }
     }
   };
 
