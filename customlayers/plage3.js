@@ -1,4 +1,91 @@
-let styleOuvert = [new ol.style.Style({
+/**
+* ClusterByAttribut extends ol ClusterByAttribut
+* This class allow to cluster data by an feature properties
+*
+*/
+class ClusterByAttribut extends ol.source.Cluster {
+
+  /**
+   * @param {Options} options Cluster options.
+   */
+  constructor(options) {
+    super({
+      attributions: options.attributions,
+      wrapX: options.wrapX,
+      source: options.source,
+      distance: 0,
+      geometryFunction: options.geometryFunction
+    });
+
+    this.attribut = options.attribut;
+    this.isCluster = true;
+  }
+
+  /**
+   * Set isCluster info
+   * @param {boolean} isCluster The fact feature should be clustered or not.
+   * @api
+   */
+  setIsCluster(isCluster) {
+    this.isCluster = isCluster;
+    this.refresh();
+  }
+
+
+  refresh() {
+    this.clear();
+    //this.cluster();
+    this.addFeatures(this.features);
+  }
+
+  cluster() {
+
+    const extent = ol.extent.createEmpty();
+    const features = this.source.getFeatures();
+
+    /**
+     * @type {!Object<string, boolean>}
+     */
+    const clustered = {};
+    const attribut = this.attribut;
+    const isCluster = this.isCluster;
+
+
+    for (let i = 0, ii = features.length; i < ii; i++) {
+      const feature = features[i];
+      const value = feature.get(attribut);
+      console.log("create cluster on attribut : " + this.attribut + " for value : " + value + " and isCluster : " + isCluster);
+
+      // createOnly on cluster
+      if (!isCluster) {
+        this.features.push(this.createCluster([feature]));
+      }
+      // if feature not already in cluster
+      else if (!(ol.util.getUid(feature) in clustered)) {
+
+        let featuresForCluster = this.source.getFeatures();
+
+        featuresForCluster = featuresForCluster.filter(function(featureForCluster) {
+          const uid = ol.util.getUid(featureForCluster);
+          if (!(uid in clustered) && value == featureForCluster.get(attribut)) {
+            clustered[uid] = true;
+            return true;
+          } else {
+            return false;
+          }
+        });
+
+        this.features.push(this.createCluster(featuresForCluster));
+
+      }
+    }
+  }
+}
+
+/**
+* Définition des styles
+*/
+let stylePlageOuverte = [new ol.style.Style({
   image: new ol.style.Circle({
     fill: new ol.style.Fill({
       color: '#C31632'
@@ -11,7 +98,7 @@ let styleOuvert = [new ol.style.Style({
   })
 })];
 
-let styleFerme = [new ol.style.Style({
+let stylePlageFermee = [new ol.style.Style({
   image: new ol.style.Circle({
     fill: new ol.style.Fill({
       color: '#696969'
@@ -24,7 +111,7 @@ let styleFerme = [new ol.style.Style({
   })
 })];
 
-var manyStyle = function(radius, radius2, size) {
+var styleCluster= function(radius, radius2, size) {
   return [
     new ol.style.Style({
       image: new ol.style.Circle({
@@ -64,17 +151,17 @@ let legend = {
 };
 
 legend.items.push({
-  styles: styleOuvert,
+  styles: stylePlageOuverte,
   label: "Surveillance ouverte",
   geometry: "Point"
 });
 legend.items.push({
-  styles: styleFerme,
+  styles: stylePlageFermee,
   label: "Surveillance non ouverte",
   geometry: "Point"
 });
 legend.items.push({
-  styles: manyStyle(10, 10, 7),
+  styles: styleCluster(10, 10, 7),
   label: "Ensemble de plages",
   geometry: "Point"
 });
@@ -86,7 +173,7 @@ let yyyy = today.getFullYear();
 
 let todayText = mm + '/' + dd + '/' + yyyy;
 
-var clusterStyle = function(feature) {
+var layerStyle = function(feature) {
   var size = feature.get('features').length;
   var max_radius = 40;
   var max_value = 500;
@@ -94,84 +181,18 @@ var clusterStyle = function(feature) {
   var radius2 = radius * 80 / 100;
   if (size == 1) {
     if (feature.get('date_ouverture') >= todayText) {
-      return styleOuvert;
+      return stylePlageOuverte;
     } else {
-      return styleFerme;
+      return stylePlageFermee;
     }
   } else {
-    return manyStyle(radius, radius2, size);
+    return styleCluster(radius, radius2, size);
   }
 };
 
-
-class ClusterByAttribut extends ol.source.Cluster {
-
-  /**
-   * @param {Options} options Cluster options.
-   */
-  constructor(options) {
-    super({
-      attributions: options.attributions,
-      wrapX: options.wrapX,
-      source: options.source,
-      distance: options.distance,
-      geometryFunction: options.geometryFunction
-    });
-
-    this.attribut = options.attribut;
-  }
-
-  refresh() {
-    this.clear();
-    //this.cluster();
-    this.addFeatures(this.features);
-  }
-
-  cluster() {
-
-    const extent = ol.extent.createEmpty();
-    const features = this.source.getFeatures();
-
-    /**
-     * @type {!Object<string, boolean>}
-     */
-    const clustered = {};
-    const attribut = this.attribut;
-    const distance = this.distance;
-
-
-    for (let i = 0, ii = features.length; i < ii; i++) {
-      const feature = features[i];
-      const value = feature.get(attribut);
-      console.log("create cluster on attribut : " + this.attribut + " for value : " + value + " and distance : " + distance);
-
-      // createOnly on cluster
-      if (distance == 0) {
-        this.features.push(this.createCluster([feature]));
-      }
-      // if feature not already in cluster
-      else if (!(ol.util.getUid(feature) in clustered)) {
-
-        let featuresForCluster = this.source.getFeatures();
-
-        featuresForCluster = featuresForCluster.filter(function(featureForCluster) {
-          const uid = ol.util.getUid(featureForCluster);
-          if (!(uid in clustered) && value == featureForCluster.get(attribut)) {
-            clustered[uid] = true;
-            return true;
-          } else {
-            return false;
-          }
-        });
-
-        this.features.push(this.createCluster(featuresForCluster));
-
-      }
-    }
-  }
-}
-
-
+/**
+* Définition du layer
+*/
 let layer = new ol.layer.Vector({
   source: new ClusterByAttribut({
     attribut: "grand_territoire",
@@ -191,7 +212,7 @@ let layer = new ol.layer.Vector({
       format: new ol.format.GeoJSON()
     })
   }),
-  style: clusterStyle
+  style: layerStyle
 });
 
 /**
@@ -201,8 +222,8 @@ let layer = new ol.layer.Vector({
 */
 let handle = function(clusters, views) {
 
-  const layerId = "plage";
-  console.log("handle");
+  let layerId = "plage";
+
   var l = mviewer.getLayer(layerId);
   // Zoom only if multiple feature
   if (clusters.length > 0 && clusters[0].properties.features.length > 1) {
@@ -252,9 +273,10 @@ new CustomLayer("plage", layer, legend, handle);
 mviewer.getMap().getView().on('change:resolution', function(evt) {
   var view = evt.target;
 
+  // switch to cluster or no cluster mode depending on zoom level
   if (view.getZoom() >= 9) {
-    layer.getSource().setDistance(0);
+    layer.getSource().setIsCluster(false);
   } else {
-    layer.getSource().setDistance(50);
+    layer.getSource().setIsCluster(true);
   }
 });
