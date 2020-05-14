@@ -42,7 +42,7 @@ var filter = (function() {
         mviewer.getLayer(layerId).layer.once('change', function(e) {
           _manageFilterPanel();
           _filterFeatures(layerId);
-          
+
           if (mviewer.customComponents.filter.config.options.open && window.innerWidth > 360) {
             $("#advancedFilter").show();
           }
@@ -364,12 +364,14 @@ var filter = (function() {
 
     // If alreadyExist, juste update params values
     if ($('#' + id).length) {
+      $("#" + id).tagsinput('destroy');
       // Update tagsinput params
       $("#" + id).tagsinput({
         typeahead: {
           source: params.availableValues
         },
-        freeInput: false
+        freeInput: false,
+        confirmKeys: [13, 188]
       });
     } else {
 
@@ -391,7 +393,8 @@ var filter = (function() {
         typeahead: {
           source: params.availableValues
         },
-        freeInput: false
+        freeInput: false,
+        confirmKeys: [13, 188]
       });
 
       //EVENT
