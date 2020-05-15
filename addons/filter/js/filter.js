@@ -41,7 +41,6 @@ var filter = (function() {
         // wait until at least one layer is load before create filter panel
         mviewer.getLayer(layerId).layer.once('change', function(e) {
           _manageFilterPanel();
-          _filterFeatures(layerId);
 
           if (mviewer.customComponents.filter.config.options.open && window.innerWidth > 360) {
             $("#advancedFilter").show();
