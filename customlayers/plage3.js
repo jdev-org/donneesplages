@@ -211,7 +211,6 @@ var layerStyle = function(feature) {
 let layer = new ol.layer.Vector({
   source: new ClusterByAttribut({
     attribut: "grand_territoire",
-    distance: 50,
     geometryFunction: function(feature) {
       var geom = feature.getGeometry();
       console.log(" Geometry type : " + geom.getType());

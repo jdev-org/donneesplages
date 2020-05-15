@@ -12,12 +12,12 @@
       "filter": [{
           "attribut": "grand_territoire",
           "type": "button",
-          "label": "Grands térritoires"
+          "label": "Grand térritoire"
         },
         {
           "attribut": "equipements_services",
           "type": "button",
-          "label": "Equipements et services",
+          "label": "Service",
           "updateOnChange": true
         },
         {

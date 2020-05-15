@@ -38,7 +38,7 @@ var filter = (function() {
       if (nbLayers == 1) {
         _currentSelectedLayer = layerId;
 
-        // wait until at first layer is load before create filter panel
+        // wait until at least one layer is load before create filter panel
         mviewer.getLayer(layerId).layer.once('change', function(e) {
           _manageFilterPanel();
 
@@ -116,9 +116,9 @@ var filter = (function() {
         // add selectBox if needed
         var content = "";
         if (nbLayers > 1 && indexLayerId == 0) {
-          contentSelectLayer.push('<option selected="selected" value="' + layerId + '">' + mviewer.getLayer(layerId).name + '</option>');
+          contentSelectLayer.push('<option selected="selected">' + layerId + '</option>');
         } else if (nbLayers > 1) {
-          contentSelectLayer.push('<option value="' + layerId + '">' + mviewer.getLayer(layerId).name + '</option>');
+          contentSelectLayer.push('<option >' + layerId + '</option>');
         }
         $("#advancedFilter").append('<div id="' + destinationDivId + '" "></div>');
       }
