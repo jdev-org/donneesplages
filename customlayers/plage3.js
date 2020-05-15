@@ -29,7 +29,7 @@ class ClusterByAttribut extends ol.source.Cluster {
    */
   setIsCluster(isCluster) {
     this.isCluster = isCluster;
-    this.refresh();
+    this.cluster();
   }
 
   /**
@@ -45,8 +45,9 @@ class ClusterByAttribut extends ol.source.Cluster {
   * overide refresh from ol.Cluster
   */
   refresh() {
-    this.clear();
+    this.clear(true);
     this.addFeatures(this.features);
+    this.changed();
   }
 
   /**

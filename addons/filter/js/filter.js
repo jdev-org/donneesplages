@@ -409,8 +409,12 @@ var filter = (function() {
 
       $("#" + clearId).on('click', function(event) {
         $("#" + id).tagsinput('removeAll');
-        _removeFilterElementFromList(layerId, params.attribut, null);
-        _filterFeatures(layerId);
+        var layerFiltersParams = _layersFiltersParams.get(layerId);
+        // test is at least one filter for this attribut exist
+        if(layerFiltersParams.filter(f => f.attribut == params.attribut && f.currentValues.length).length){
+          _removeFilterElementFromList(layerId, params.attribut, null);
+          _filterFeatures(layerId);
+        }
       });
 
       $("#" + id).on('itemRemoved', function(event) {
@@ -450,8 +454,12 @@ var filter = (function() {
       $("#" + clearId).click(function(e) {
         e.preventDefault();
         $("#" + id).datepicker('setDate', null);
-        _removeFilterElementFromList(layerId, params.attribut, null);
-        _filterFeatures(layerId);
+        var layerFiltersParams = _layersFiltersParams.get(layerId);
+        // test is at least one filter for this attribut exist
+        if(layerFiltersParams.filter(f => f.attribut == params.attribut && f.currentValues.length).length){
+          _removeFilterElementFromList(layerId, params.attribut, null);
+          _filterFeatures(layerId);
+      }
       });
     }
 
@@ -520,8 +528,12 @@ var filter = (function() {
     }
 
     $("#" + clearId).on('click', function(event) {
+      var layerFiltersParams = _layersFiltersParams.get(layerId);
+      // test is at least one filter for this attribut exist
+      if(layerFiltersParams.filter(f => f.attribut == params.attribu && f.currentValues.length).length){
       _removeFilterElementFromList(layerId, params.attribut, null);
       _filterFeatures(layerId);
+    }
     });
   };
 
@@ -755,7 +767,8 @@ var filter = (function() {
   };
 
   /**
-   *
+   * _clearFilter from a given id
+   * @param {String} id - example button-plage-grand_territoire
    */
   var _clearFilter = function(id) {
     // get information for elment id ( type-layerid-attribut-index)
@@ -764,8 +777,12 @@ var filter = (function() {
     var layerId = filtreInformation[1];
     var attribut = filtreInformation[2];
 
-    _removeFilterElementFromList(layerId, attribut, null);
-    _filterFeatures(layerId);
+    var layerFiltersParams = _layersFiltersParams.get(layerId);
+    // test is at least one filter for this attribut exist
+    if(layerFiltersParams.filter(f => f.attribut == attribut && f.currentValues.length).length){
+      _removeFilterElementFromList(layerId, attribut, null);
+      _filterFeatures(layerId);
+    }
   };
 
   /**
@@ -812,12 +829,17 @@ var filter = (function() {
   var _clearAllFilter = function() {
     // Parse all layer to get params
     for (var [layerId, params] of _layersFiltersParams) {
-      _clearFilterFeatures(layerId);
 
-      var source = mviewer.getLayer(layerId).layer.getSource();
-      // update cluster information
-      if (source instanceof ol.source.Cluster) {
-        source.setIsFilter(false);
+      var layerFiltersParams = _layersFiltersParams.get(layerId);
+      // test is at least one filter for this attribut exist
+      if(layerFiltersParams.filter(f => f.currentValues.length).length){
+        _clearFilterFeatures(layerId);
+
+        var source = mviewer.getLayer(layerId).layer.getSource();
+        // update cluster information
+        if (source instanceof ol.source.Cluster) {
+          source.setIsFilter(false);
+        }
       }
     }
   };
