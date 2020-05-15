@@ -41,13 +41,17 @@ class ClusterByAttribut extends ol.source.Cluster {
     this.isFilter = isFilter;
   }
 
-
+  /**
+  * overide refresh from ol.Cluster
+  */
   refresh() {
     this.clear();
-    //this.cluster();
     this.addFeatures(this.features);
   }
 
+  /**
+  * overide cluster from ol.Cluster
+  */
   cluster() {
 
     const extent = ol.extent.createEmpty();
@@ -281,7 +285,7 @@ let handle = function(clusters, views) {
 
 var clPlage = new CustomLayer("plage", layer, legend, handle);
 
-var initialTooltipContent =   clPlage.config.tooltipcontent;
+var initialTooltipContent = "{{nom_plage}} - {{commune}}"
 var clusterTootipContent = "{{grand_territoire}}"
 
 // start with cluster
@@ -294,9 +298,9 @@ mviewer.getMap().getView().on('change:resolution', function(evt) {
   // switch to cluster or no cluster mode depending on zoom level
   if (view.getZoom() >= 9) {
     layer.getSource().setIsCluster(false);
-  //  clPlage.config.tooltipcontent = initialTooltipContent;
+    clPlage.config.tooltipcontent = initialTooltipContent;
   } else {
     layer.getSource().setIsCluster(true);
-  //  clPlage.config.tooltipcontent = clusterTootipContent;
+    clPlage.config.tooltipcontent = clusterTootipContent;
   }
 });
