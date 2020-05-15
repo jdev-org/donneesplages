@@ -575,6 +575,20 @@ var filter = (function() {
         }
       });
     }
+
+    var source = mviewer.getLayer(layerId).layer.getSource();
+    // update cluster information, test if all filter are cleared to reset view
+    if (source instanceof ol.source.Cluster) {
+
+      var atLeasteOnFilter = false;
+      layerFiltersParams.forEach(function(filter, index, array) {
+        if (filter.currentValues.length > 0){
+          atLeasteOnFilter = true;
+        }
+      });
+      source.setIsFilter(atLeasteOnFilter);
+    }
+
   };
 
   /**
@@ -710,8 +724,6 @@ var filter = (function() {
       var bufferedExtent = ol.extent.buffer(extent, ol.extent.getWidth(extent) / 2);
       mviewer.getMap().getView().fit(bufferedExtent);
     }
-
-
     _manageFilterPanel(layerId);
   };
 
