@@ -535,7 +535,7 @@ var filter = (function() {
     $("#" + clearId).on('click', function(event) {
       var layerFiltersParams = _layersFiltersParams.get(layerId);
       // test is at least one filter for this attribut exist
-      if(layerFiltersParams.filter(f => f.attribut == params.attribu && f.currentValues.length).length){
+      if(layerFiltersParams.filter(f => f.attribut == params.attribut && f.currentValues.length).length){
       _removeFilterElementFromList(layerId, params.attribut, null);
       _filterFeatures(layerId);
     }
