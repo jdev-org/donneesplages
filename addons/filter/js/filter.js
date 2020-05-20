@@ -37,28 +37,16 @@ var filter = (function() {
       nbLayers++;
       if (nbLayers == 1) {
         _currentSelectedLayer = layerId;
-
-        // wait until at first layer is load before create filter panel
-        var evt = mviewer.getLayer(layerId).layer.getSource().on('change', function(e) {
-          ol.Observable.unByKey(evt);
-          _manageFilterPanel();
-
-          if (mviewer.customComponents.filter.config.options.open && window.innerWidth > 360) {
-            $("#advancedFilter").show();
-          }
-
-          $('#advancedFilter').easyDrag({
-            'handle': 'h2'
-          });
-          $('[data-toggle="filter-tooltip"]').tooltip({
-            placement: 'top'
-          });
-        });
       }
 
     });
 
     if (_layersFiltersParams.size > 0) {
+
+      // wait until at first layer is load before create filter panel
+      mviewer.getMap().once('postcompose', function(e) {
+        _manageFilterPanel();
+      });
 
       //Add filter button to toolstoolbar
       var button = [
@@ -233,22 +221,22 @@ var filter = (function() {
             filtersParams.availableValues[0] = endDate;
           }
         }
-      } else if (!_isEmpty(feature.get(filtersParams.attribut))){
+      } else if (!_isEmpty(feature.get(filtersParams.attribut))) {
 
         // if needed, split values with specified separatore
-       if(filtersParams.dataSeparator){
-         var results = (feature.get(filtersParams.attribut)).split(filtersParams.dataSeparator);
+        if (filtersParams.dataSeparator) {
+          var results = (feature.get(filtersParams.attribut)).split(filtersParams.dataSeparator);
 
-         results.forEach(result => {
+          results.forEach(result => {
 
-           // if new value
-           if (filtersParams.availableValues.indexOf(result) < 0) {
-             filtersParams.availableValues.push(result);
-           }
-         });
-       }else if (filtersParams.availableValues.indexOf(feature.get(filtersParams.attribut)) <0){
-         filtersParams.availableValues.push(feature.get(filtersParams.attribut));
-       }
+            // if new value
+            if (filtersParams.availableValues.indexOf(result) < 0) {
+              filtersParams.availableValues.push(result);
+            }
+          });
+        } else if (filtersParams.availableValues.indexOf(feature.get(filtersParams.attribut)) < 0) {
+          filtersParams.availableValues.push(feature.get(filtersParams.attribut));
+        }
 
       }
     }
@@ -416,7 +404,7 @@ var filter = (function() {
         $("#" + id).tagsinput('removeAll');
         var layerFiltersParams = _layersFiltersParams.get(layerId);
         // test is at least one filter for this attribut exist
-        if(layerFiltersParams.filter(f => f.attribut == params.attribut && f.currentValues.length).length){
+        if (layerFiltersParams.filter(f => f.attribut == params.attribut && f.currentValues.length).length) {
           _removeFilterElementFromList(layerId, params.attribut, null);
           _filterFeatures(layerId);
         }
@@ -447,7 +435,7 @@ var filter = (function() {
         '<div class="form-group form-group-timer mb-2 mr-sm-2">',
         '<div class="form-check filter-legend">',
         '<legend > ' + params.label + ' </legend>',
-        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-trash',
+        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-trash"',
         ' data-toggle="filter-tooltip" data-original-title="Réinitaliser ce filtre"></span>',
         '</div>',
       ];
@@ -461,10 +449,10 @@ var filter = (function() {
         $("#" + id).datepicker('setDate', null);
         var layerFiltersParams = _layersFiltersParams.get(layerId);
         // test is at least one filter for this attribut exist
-        if(layerFiltersParams.filter(f => f.attribut == params.attribut && f.currentValues.length).length){
+        if (layerFiltersParams.filter(f => f.attribut == params.attribut && f.currentValues.length).length) {
           _removeFilterElementFromList(layerId, params.attribut, null);
           _filterFeatures(layerId);
-      }
+        }
       });
     }
 
@@ -535,10 +523,10 @@ var filter = (function() {
     $("#" + clearId).on('click', function(event) {
       var layerFiltersParams = _layersFiltersParams.get(layerId);
       // test is at least one filter for this attribut exist
-      if(layerFiltersParams.filter(f => f.attribut == params.attribut && f.currentValues.length).length){
-      _removeFilterElementFromList(layerId, params.attribut, null);
-      _filterFeatures(layerId);
-    }
+      if (layerFiltersParams.filter(f => f.attribut == params.attribut && f.currentValues.length).length) {
+        _removeFilterElementFromList(layerId, params.attribut, null);
+        _filterFeatures(layerId);
+      }
     });
   };
 
@@ -599,7 +587,7 @@ var filter = (function() {
 
       var atLeasteOnFilter = false;
       layerFiltersParams.forEach(function(filter, index, array) {
-        if (filter.currentValues.length > 0){
+        if (filter.currentValues.length > 0) {
           atLeasteOnFilter = true;
         }
       });
@@ -784,7 +772,7 @@ var filter = (function() {
 
     var layerFiltersParams = _layersFiltersParams.get(layerId);
     // test is at least one filter for this attribut exist
-    if(layerFiltersParams.filter(f => f.attribut == attribut && f.currentValues.length).length){
+    if (layerFiltersParams.filter(f => f.attribut == attribut && f.currentValues.length).length) {
       _removeFilterElementFromList(layerId, attribut, null);
       _filterFeatures(layerId);
     }
@@ -837,7 +825,7 @@ var filter = (function() {
 
       var layerFiltersParams = _layersFiltersParams.get(layerId);
       // test is at least one filter for this attribut exist
-      if(layerFiltersParams.filter(f => f.currentValues.length).length){
+      if (layerFiltersParams.filter(f => f.currentValues.length).length) {
         _clearFilterFeatures(layerId);
 
         var source = mviewer.getLayer(layerId).layer.getSource();
@@ -862,3 +850,22 @@ var filter = (function() {
 })();
 
 new CustomComponent("filter", filter.init);
+
+// Wait until everything is loaded
+$(window).on("load", function() {
+
+  // show panel if wanted
+  if (mviewer.customComponents.filter.config.options.open && window.innerWidth > 360) {
+    $("#advancedFilter").show();
+  }
+
+  // Add draggable on panel
+  $('#advancedFilter').easyDrag({
+    'handle': 'h2'
+  });
+
+  // Update tooltip on button
+  $('[data-toggle="filter-tooltip"]').tooltip({
+    placement: 'top'
+  });
+});
