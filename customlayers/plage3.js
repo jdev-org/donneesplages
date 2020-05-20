@@ -29,7 +29,6 @@ class ClusterByAttribut extends ol.source.Cluster {
    */
   setIsCluster(isCluster) {
     this.isCluster = isCluster;
-    this.cluster();
   }
 
   /**
@@ -46,8 +45,8 @@ class ClusterByAttribut extends ol.source.Cluster {
   */
   refresh() {
     this.clear(true);
+    this.cluster();
     this.addFeatures(this.features);
-    this.changed();
   }
 
   /**
@@ -96,7 +95,7 @@ class ClusterByAttribut extends ol.source.Cluster {
 }
 
 /**
- * Définition des styles
+ * Définition du style pour les plages ouvertes
  */
 let stylePlageOuverte = [new ol.style.Style({
   image: new ol.style.Circle({
@@ -111,6 +110,9 @@ let stylePlageOuverte = [new ol.style.Style({
   })
 })];
 
+/**
+* Définition du style pour les plages fermées
+*/
 let stylePlageFermee = [new ol.style.Style({
   image: new ol.style.Circle({
     fill: new ol.style.Fill({
@@ -124,11 +126,18 @@ let stylePlageFermee = [new ol.style.Style({
   })
 })];
 
-var styleCluster = function(radius, radius2, size) {
+/**
+* Définition du style des clusters
+*
+* @param {Integer} radiusCircle1
+* @param {Integer} radiusCircle2
+* @param {String} fontSize
+*/
+var styleCluster = function(radiusCircle1, radiusCircle2, fontSize) {
   return [
     new ol.style.Style({
       image: new ol.style.Circle({
-        radius: radius,
+        radius: radiusCircle1,
         fill: new ol.style.Fill({
           color: '#44A9BB'
         })
@@ -143,14 +152,14 @@ var styleCluster = function(radius, radius2, size) {
     }),
     new ol.style.Style({
       image: new ol.style.Circle({
-        radius: radius2,
+        radius: radiusCircle2,
         fill: new ol.style.Fill({
           color: '#44BBB6'
         })
       }),
       text: new ol.style.Text({
         font: '12px roboto_regular, Arial, Sans-serif',
-        text: size.toString(),
+        text: fontSize,
         fill: new ol.style.Fill({
           color: '#fff'
         })
@@ -174,7 +183,7 @@ legend.items.push({
   geometry: "Point"
 });
 legend.items.push({
-  styles: styleCluster(10, 10, 7),
+  styles: styleCluster(10, 10, "7"),
   label: "Ensemble de plages",
   geometry: "Point"
 });
@@ -187,6 +196,10 @@ let yyyy = today.getFullYear();
 
 let todayText = mm + '/' + dd + '/' + yyyy;
 
+/**
+* Choix du style en fonction de la feature
+* @param {ol.Feature} feature
+*/
 var layerStyle = function(feature) {
 
   console.log("load Style");
@@ -197,8 +210,10 @@ var layerStyle = function(feature) {
     var max_value = 500;
     var radius = 10 + Math.sqrt(size) * (max_radius / Math.sqrt(max_value));
     var radius2 = radius * 80 / 100;
-    return styleCluster(radius, radius2, size);
-  } else if (feature.get('features')[0].get('date_ouverture') >= todayText) {
+    return styleCluster(radius, radius2, size.toString());
+  }
+  // else not cluster but open (beetween two date)
+  else if (feature.get('features')[0].get('date_ouverture') >= todayText && feature.get('features')[0].get('date_fermeture') <= todayText) {
     return stylePlageOuverte;
   } else {
     return stylePlageFermee;
@@ -233,12 +248,15 @@ let layer = new ol.layer.Vector({
  * Specific handle
  * If several features in cluster zoom on it
  * else open info panel
+ * @param {ol.feature[]} clusters
+ * @param {ol.view} views
  */
 let handle = function(clusters, views) {
 
   let layerId = "plage";
 
   var l = mviewer.getLayer(layerId);
+
   // Zoom only if multiple feature
   if (clusters.length > 0 && clusters[0].properties.features.length > 1) {
     var extent = ol.extent.createEmpty();
@@ -286,11 +304,10 @@ let handle = function(clusters, views) {
 
 var clPlage = new CustomLayer("plage", layer, legend, handle);
 
-var initialTooltipContent = "{{nom_plage}} - {{commune}}"
-var clusterTootipContent = "{{grand_territoire}}"
+var nonClusterTooltipContent = "{{nom_plage}} - {{commune}}";
+var clusterTootipContent = "{{grand_territoire}}";
 
-// start with cluster
-clPlage.config.tooltipcontent = clusterTootipContent;
+console.log("refresh");
 
 // Change for cluster to non-cluster when zoomed
 mviewer.getMap().getView().on('change:resolution', function(evt) {
@@ -299,7 +316,7 @@ mviewer.getMap().getView().on('change:resolution', function(evt) {
   // switch to cluster or no cluster mode depending on zoom level
   if (view.getZoom() >= 9) {
     layer.getSource().setIsCluster(false);
-    clPlage.config.tooltipcontent = initialTooltipContent;
+    clPlage.config.tooltipcontent = nonClusterTooltipContent;
   } else {
     layer.getSource().setIsCluster(true);
     clPlage.config.tooltipcontent = clusterTootipContent;

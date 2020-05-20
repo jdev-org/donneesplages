@@ -39,7 +39,8 @@ var filter = (function() {
         _currentSelectedLayer = layerId;
 
         // wait until at first layer is load before create filter panel
-        mviewer.getLayer(layerId).layer.once('change', function(e) {
+        var evt = mviewer.getLayer(layerId).layer.getSource().on('change', function(e) {
+          ol.Observable.unByKey(evt);
           _manageFilterPanel();
 
           if (mviewer.customComponents.filter.config.options.open && window.innerWidth > 360) {
@@ -52,7 +53,6 @@ var filter = (function() {
           $('[data-toggle="filter-tooltip"]').tooltip({
             placement: 'top'
           });
-
         });
       }
 
@@ -70,6 +70,7 @@ var filter = (function() {
       ].join("");
       $("#toolstoolbar").prepend(button);
     }
+
   };
 
   /**

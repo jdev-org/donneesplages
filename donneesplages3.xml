@@ -34,7 +34,7 @@
                 fusesearchkeys="nom_plage"
                 fusesearchresult="{{nom_plage}} - {{commune}}"
                 tooltip="false"
-                tooltipcontent="{{nom_plage}} - {{commune}}"
+                tooltipcontent="{{grand_territoire}}"
                 attribution="GIP Littoral, SIRTAQUI, Charente Tourisme">
                 <!-- addons bootstrapatable needed for this template -->
                 <template url="apps/donneesplages/templates/plage.mst"></template>
