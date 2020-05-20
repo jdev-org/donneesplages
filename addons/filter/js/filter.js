@@ -43,9 +43,9 @@ var filter = (function() {
 
     if (_layersFiltersParams.size > 0) {
 
-      // wait until at first layer is load before create filter panel
-      mviewer.getMap().once('postcompose', function(e) {
-        _manageFilterPanel();
+      // wait map ready
+      mviewer.getMap().once('rendercomplete', function(e) {
+        _initFilterPanel();
       });
 
       //Add filter button to toolstoolbar
@@ -57,6 +57,46 @@ var filter = (function() {
         '</button>'
       ].join("");
       $("#toolstoolbar").prepend(button);
+    }
+
+  };
+
+  /**
+   * Public Method: _initFilterPanel
+   *
+   * Recour au setTimeout car aucun event ne se déclenche correctement à la fin du chargement des données
+   */
+  var _initFilterPanel = function() {
+    // Parse all layers to get params
+    for (var [layerId, params] of _layersFiltersParams) {
+
+      if (mviewer.getLayer(layerId) && mviewer.getLayer(layerId).layer) {
+        var source = mviewer.getLayer(layerId).layer.getSource();
+        var features = source instanceof ol.source.Cluster ? source.getSource().getFeatures() : source.getFeatures();
+
+        if (features.length) {
+          _manageFilterPanel();
+
+          // show panel if wanted
+          if (mviewer.customComponents.filter.config.options.open && window.innerWidth > 360) {
+            $("#advancedFilter").show();
+          }
+
+          // Add draggable on panel
+          $('#advancedFilter').easyDrag({
+            'handle': 'h2'
+          });
+
+          // Update tooltip on button
+          $('[data-toggle="filter-tooltip"]').tooltip({
+            placement: 'top'
+          });
+        } else {
+          setTimeout(_initFilterPanel, 300); // try again in 300 milliseconds
+        }
+      } else {
+        setTimeout(_initFilterPanel, 300); // try again in 300 milliseconds
+      }
     }
 
   };
@@ -850,22 +890,3 @@ var filter = (function() {
 })();
 
 new CustomComponent("filter", filter.init);
-
-// Wait until everything is loaded
-$(window).on("load", function() {
-
-  // show panel if wanted
-  if (mviewer.customComponents.filter.config.options.open && window.innerWidth > 360) {
-    $("#advancedFilter").show();
-  }
-
-  // Add draggable on panel
-  $('#advancedFilter').easyDrag({
-    'handle': 'h2'
-  });
-
-  // Update tooltip on button
-  $('[data-toggle="filter-tooltip"]').tooltip({
-    placement: 'top'
-  });
-});

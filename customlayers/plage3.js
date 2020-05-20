@@ -228,7 +228,6 @@ let layer = new ol.layer.Vector({
     attribut: "grand_territoire",
     geometryFunction: function(feature) {
       var geom = feature.getGeometry();
-      console.log(" Geometry type : " + geom.getType());
       if (geom.getType() == 'MultiPoint') {
         geom = geom.getPoint(0);
       } else if (geom.getType() == 'Polygon') {
@@ -306,8 +305,6 @@ var clPlage = new CustomLayer("plage", layer, legend, handle);
 
 var nonClusterTooltipContent = "{{nom_plage}} - {{commune}}";
 var clusterTootipContent = "{{grand_territoire}}";
-
-console.log("refresh");
 
 // Change for cluster to non-cluster when zoomed
 mviewer.getMap().getView().on('change:resolution', function(evt) {
