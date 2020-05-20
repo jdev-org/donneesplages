@@ -18,7 +18,8 @@
           "attribut": "equipements_services",
           "type": "button",
           "label": "Equipements et services",
-          "updateOnChange": true
+          "updateOnChange": true,
+          "dataSeparator":","
         },
         {
           "attribut": "nature_baignade",

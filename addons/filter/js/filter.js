@@ -234,17 +234,22 @@ var filter = (function() {
           }
         }
       } else if (!_isEmpty(feature.get(filtersParams.attribut))){
-        // if needed, split values with ; Feature values can be one String separate by ;
-        // TODO see if separator need to be put in config
-        var results = (feature.get(filtersParams.attribut)).split(';');
 
-        results.forEach(result => {
+        // if needed, split values with specified separatore
+       if(filtersParams.dataSeparator){
+         var results = (feature.get(filtersParams.attribut)).split(filtersParams.dataSeparator);
 
-          // if new value
-          if (filtersParams.availableValues.indexOf(result) < 0) {
-            filtersParams.availableValues.push(result);
-          }
-        });
+         results.forEach(result => {
+
+           // if new value
+           if (filtersParams.availableValues.indexOf(result) < 0) {
+             filtersParams.availableValues.push(result);
+           }
+         });
+       }else if (filtersParams.availableValues.indexOf(feature.get(filtersParams.attribut)) <0){
+         filtersParams.availableValues.push(feature.get(filtersParams.attribut));
+       }
+
       }
     }
   };
