@@ -748,11 +748,13 @@ var filter = (function() {
       // Hide features
       if (atLeastOneFilter && hideFeature) {
         feature.setStyle(new ol.style.Style({}));
+        feature.hidden = hideFeature;
         // update cluster information to avoir clustering
         if (source instanceof ol.source.Cluster) {
           source.setIsFilter(true);
         }
       } else {
+        feature.hidden = hideFeature;
         feature.setStyle(null);
         newVisibleFeatures.push(ol.util.getUid(feature));
         // Extend creation if zoomOnFeatures enable
