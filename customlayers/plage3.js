@@ -201,9 +201,8 @@ let todayText = mm + '/' + dd + '/' + yyyy;
 * @param {ol.Feature} feature
 */
 var layerStyle = function(feature) {
-
-  console.log("load Style");
   // if cluster
+  const hiddenFeature = feature.get('features').filter(f => !f.hidden).length;
   if (feature.get('features').length>1) {
     var size = feature.get('features').length;
     var max_radius = 40;
@@ -213,10 +212,11 @@ var layerStyle = function(feature) {
     return styleCluster(radius, radius2, size.toString());
   }
   // else not cluster but open (beetween two date)
+  
   else if (feature.get('features')[0].get('date_ouverture') >= todayText && feature.get('features')[0].get('date_fermeture') <= todayText) {
-    return stylePlageOuverte;
-  } else {
-    return stylePlageFermee;
+    return hiddenFeature ? stylePlageOuverte : null;
+  } else {    
+    return hiddenFeature ? stylePlageFermee : null;
   }
 };
 
