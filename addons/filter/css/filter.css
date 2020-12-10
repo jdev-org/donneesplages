@@ -11,7 +11,7 @@
 
 .advancedFilter h2 {
   font-size: 12.5px;
-  color: #9DE0EF;
+  color: blue;
   font-weight: bold;
   font-family: 'roboto_regular', Arial, Sans-serif;
   margin-top: 0px;
@@ -36,6 +36,7 @@
   margin-right: 2px;
   margin-left: 2px;
   padding: .3em .6em .3em;
+  background-color:blue;
 }
 
 .advancedFilter legend {
@@ -59,6 +60,7 @@
 /* needed to add x button on filter */
 .filter-legend {
   position: relative;
+  color: blue;
 }
 
 .filter-legend .glyphicon-trash {
@@ -66,5 +68,5 @@
   cursor: pointer;
   right: 30px;
   top: 4px;
-  color: #9DE0EF;
+  color: blue;
 }

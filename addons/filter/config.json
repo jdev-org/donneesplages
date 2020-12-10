@@ -4,42 +4,60 @@
   "html": "filter.html",
   "target": "page-content-wrapper",
   "options": {
-    "title": "filtrer",
-    "open": true,
-    "zoomOnFeatures": true,
-    "layers": [{
-      "layerId": "plage",
-      "filter": [{
-          "attribut": "grand_territoire",
-          "type": "button",
-          "label": "Grands térritoires"
+    "mviewer": {
+      "donneesplage": {
+        "tooltipPosition": "bottom-left",
+        "title": "Filtrer",
+        "legendTitle": "Sélectionner une donnée :",
+        "style": {
+          "border": "1px white solid",
+          "background": "white",
+          "text": "#0000ff",
+          "colorButton": "#0000ff",
+          "selectedBtnColor": "#0000ff",
+          "unSelectedBtnColor": "#bbbbbb",
+          "textSelectBtnColor": "white",
+          "top": "450px",
+          "right": "15px"
         },
-        {
-          "attribut": "equipements_services",
-          "type": "button",
-          "label": "Equipements et services",
-          "updateOnChange": true,
-          "dataSeparator":","
-        },
-        {
-          "attribut": "nature_baignade",
-          "type": "combobox",
-          "label": "Nature de baignade",
-          "updateOnChange": true
-        },
-        {
-          "attribut": "commune",
-          "type": "textbox",
-          "label": "Commune",
-          "updateOnChange": true
-        },
-        {
-          "attribut": ["date_ouverture", "date_fermeture"],
-          "type": "date",
-          "label": "Ouverte le",
-          "updateOnChange": true
-        }
-      ]
-    }]
+        "open": true,
+        "zoomOnFeatures": false,
+        "layers": [{
+          "layerId":"plage",
+          "filter": [
+            {
+              "attribut": "grand_territoire",
+              "type": "button",
+              "label": "Grands térritoires"
+            },
+            {
+              "attribut": "equipements_services",
+              "type": "button",
+              "label": "Equipements et services",
+              "updateOnChange": true,
+              "dataSeparator":","
+            },
+            {
+              "attribut": "nature_baignade",
+              "type": "combobox",
+              "label": "Nature de baignade",
+              "updateOnChange": true
+            },
+            {
+              "attribut": "commune",
+              "type": "textbox",
+              "label": "Commune",
+              "updateOnChange": true
+            },
+            {
+              "attribut": ["date_ouverture", "date_fermeture"],
+              "type": "date",
+              "label": "Ouverte le",
+              "updateOnChange": true
+            }
+          ]
+        }]
+      }
+    }
   }
 }

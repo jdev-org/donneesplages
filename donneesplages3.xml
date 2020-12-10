@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
-    <application title="Plages surveillées de Nouvelle-Aquitaine" mouseposition="false" logo="apps/donneesplages/data/img/gip_littoral.png" measuretools="false" exportpng="true" style="css/themes/plage.css" togglealllayersfromtheme="true"/>
+    <application id="donneesplage" title="Plages surveillées de Nouvelle-Aquitaine" mouseposition="false" logo="apps/donneesplages/data/img/gip_littoral.png" measuretools="false" exportpng="true" style="css/themes/plage.css" togglealllayersfromtheme="true"/>
     <mapoptions maxzoom="19" projection="EPSG:3857" center="37263.77010759735,5620009.10189043" zoom="8" projextent="-20037508.342789244, -20037508.342789244, 20037508.342789244, 20037508.342789244" />
 
     <baselayers style="default"><!-- style="default"||gallery" -->

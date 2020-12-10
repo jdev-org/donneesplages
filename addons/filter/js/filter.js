@@ -1,10 +1,16 @@
 var filter = (function() {
-
   /**
    * Property: _layersParams
    *  @type {Map}
    */
   var _layersFiltersParams = new Map();
+
+
+    /**
+   * Property: _visibleLayers
+   *  @type {Map}
+   */
+  var _visibleLayers = new Map();
 
   /**
    * Property: _visibleFeatures
@@ -23,20 +29,29 @@ var filter = (function() {
    *
    */
   var _initFilterTool = function() {
-
+    // get config for a specific mviewer
+    var mviewerId = configuration.getConfiguration().application.id;
+    var options = mviewer.customComponents.filter.config.options;
+    if(mviewerId && options.mviewer && options.mviewer[mviewerId]) {
+      mviewer.customComponents.filter.config.options = options.mviewer[mviewerId];
+      options = mviewer.customComponents.filter.config.options;
+    }
+    // get filters by layer
     var layerParams = mviewer.customComponents.filter.config.options.layers;
     var layerId = "";
     var nbLayers = 0;
 
-    layerParams.forEach(layer => {
+    layerParams.forEach((layer,i) => {
       layerId = layer.layerId;
+      var mvLayer = mviewer.getLayer(layerId) ? mviewer.getLayer(layerId).layer : null;
       // Should never happens but we could check if layer.id not already exist in _layersParams
       _layersFiltersParams.set(layerId, layer.filter);
+      if(mvLayer && mvLayer.getVisible()) _visibleLayers.set(layerId, layer.filter);
       _visibleFeatures.set(layerId, []);
 
       nbLayers++;
-      if (nbLayers == 1) {
-        _currentSelectedLayer = layerId;
+      if (!_currentSelectedLayer && (nbLayers == 1 && mvLayer && mvLayer.getVisible() || mvLayer && mvLayer.getVisible())) {
+        _currentSelectedLayer =  layerId;
       }
 
     });
@@ -49,33 +64,68 @@ var filter = (function() {
       });
 
       //Add filter button to toolstoolbar
-      var button = [
-        '<button id="filterbtn" class="btn btn-default btn-raised" ',
-        ' onclick="filter.toggle();"  title="Filtrer les données" i18n="tbar.right.filter"',
-        ' tabindex="115" accesskey="f">',
-        '<span class="glyphicon glyphicon-filter" aria-hidden="true"></span>',
-        '</button>'
-      ].join("");
+      var button = `
+      <button id="filterbtn" class="btn btn-default btn-raised"
+        onclick="filter.toggle();"  title="Filtrer les données" i18n="tbar.right.filter"
+        tabindex="115" accesskey="f">
+        <span class="glyphicon glyphicon-filter" aria-hidden="true">
+        </span>
+      </button>`;
       $("#toolstoolbar").prepend(button);
+      $('#filterbtn').css('color', options.style.colorButton || 'black');
     }
 
+    $("#filterbtn").tooltip({
+      placement: 'left',
+      trigger: 'hover',
+      html: true,
+      container: 'body',
+      template: mviewer.templates.tooltip
+    });
+
+    // custom from config
+    $('#filterTitle').text(options.title);
+    _setStyle();
   };
+
+  var _waitLayer = function(olLayer) {
+    if(olLayer.getVisible()) {
+      // not already loaded
+      setTimeout(_initFilterPanel, 300); // try again in 300 milliseconds
+    } else {
+      var layerId = olLayer.getProperties().mviewerid;
+      $('#advancedFilter-'+layerId).empty().append('<span class="textlabel">Données non visible.</span>');
+      var evt = olLayer.getSource().once('change', function (e) {
+          // only for ready state
+          if(olLayer.getVisible() && olLayer.getSource().getState() == 'ready') {
+              
+              var layerFiltersParams = _layersFiltersParams.get(layerId);
+              for (var index in layerFiltersParams) {
+                layerFiltersParams[index].availableValues = undefined;
+              }
+              _initFilterPanel(olLayer.getProperties().mviewerid);
+              ol.Observable.unByKey(evt);
+          }
+      });
+    }
+  }
 
   /**
    * Public Method: _initFilterPanel
    *
    * Recour au setTimeout car aucun event ne se déclenche correctement à la fin du chargement des données
    */
-  var _initFilterPanel = function() {
+  var _initFilterPanel = function(id) {
+    var options = mviewer.customComponents.filter.config.options;
     // Parse all layers to get params
     for (var [layerId, params] of _layersFiltersParams) {
-
-      if (mviewer.getLayer(layerId) && mviewer.getLayer(layerId).layer) {
-        var source = mviewer.getLayer(layerId).layer.getSource();
+      var mviewerLayer = mviewer.getLayer(layerId);
+      if (mviewerLayer && mviewerLayer.layer && mviewerLayer.layer.getVisible()) {
+        var source = mviewerLayer.layer.getSource();
         var features = source instanceof ol.source.Cluster ? source.getSource().getFeatures() : source.getFeatures();
 
         if (features.length) {
-          _manageFilterPanel();
+          _manageFilterPanel(id);
 
           // show panel if wanted
           if (mviewer.customComponents.filter.config.options.open && window.innerWidth > 360) {
@@ -84,18 +134,27 @@ var filter = (function() {
 
           // Add draggable on panel
           $('#advancedFilter').easyDrag({
-            'handle': 'h2'
+            handle: 'h2',
+            container: $('#map')
           });
 
           // Update tooltip on button
           $('[data-toggle="filter-tooltip"]').tooltip({
-            placement: 'top'
+            placement: options.tooltipPosition || 'bottom-left'
+          });
+          
+          $("#filterbtn").tooltip({
+            placement: 'left',
+            trigger: 'hover',
+            html: true,
+            container: 'body',
+            template: mviewer.templates.tooltip
           });
         } else {
-          setTimeout(_initFilterPanel, 300); // try again in 300 milliseconds
+          _waitLayer(mviewerLayer.layer);
         }
       } else {
-        setTimeout(_initFilterPanel, 300); // try again in 300 milliseconds
+        _waitLayer(mviewerLayer.layer);
       }
     }
 
@@ -123,19 +182,22 @@ var filter = (function() {
    *
    *
    */
-  var _manageFilterPanel = function() {
-
+  var _manageFilterPanel = function(id) {
     var nbLayers = _layersFiltersParams.size;
-
-    var contentSelectLayer = ['<div class="form-group mb-2 mr-sm-2">',
-      '<legend>Choix de la couche</legend>',
-      '<select id="select-FilterLayer" class="form-control" onchange="filter.selectLayer(this)">'
+    var options = mviewer.customComponents.filter.config.options;
+    var title = options.legendTitle || 'Choix de la couche';
+    var contentSelectLayer = [`<div class="form-group mb-2 mr-sm-2">
+      <legend id="layerSelectText" class="textlabel">${title}</legend>
+      <select id="select-FilterLayer" class="form-control" onchange="filter.selectLayer(this)">`
     ];
 
     var indexLayerId = 0;
+    
+    // remove hide messages
+    $('.hideData').remove();
+
     // Parse all layers to get params
     for (var [layerId, params] of _layersFiltersParams) {
-
       // Create div id
       var destinationDivId = "advancedFilter-" + layerId;
 
@@ -143,21 +205,17 @@ var filter = (function() {
       if (!$('#' + destinationDivId).length) {
 
         // add selectBox if needed
-        var content = "";
-        if (nbLayers > 1 && indexLayerId == 0) {
-          contentSelectLayer.push('<option selected="selected" value="' + layerId + '">' + mviewer.getLayer(layerId).name + '</option>');
-        } else if (nbLayers > 1) {
-          contentSelectLayer.push('<option value="' + layerId + '">' + mviewer.getLayer(layerId).name + '</option>');
+        if(nbLayers>1) {
+          //contentSelectLayer.push(`<option value="${layerId}" ${indexLayerId == 0 ? 'selected="selected"' : ''}>${mviewer.getLayer(layerId).name}</option>`);
+          contentSelectLayer.push(`<option value="${layerId}">${mviewer.getLayer(layerId).name}</option>`);
         }
         $("#advancedFilter").append('<div id="' + destinationDivId + '" "></div>');
       }
 
       // update distinct values needed to create template
       _updateFeaturesDistinctValues(layerId);
-
       // Parse all params to create panel
       for (var index in params) {
-
         // condition on type
         if (params[index].type == "checkbox") {
           _manageCheckboxFilter(destinationDivId, layerId, params[index]);
@@ -174,6 +232,9 @@ var filter = (function() {
       if (layerId != _currentSelectedLayer) {
         $("#" + destinationDivId).hide();
       }
+      if(!mviewer.getLayer(layerId).layer.getVisible()) {
+        $('#advancedFilter-'+layerId).empty().append('<label class="textlabel hideData">Données non visibles.</label>');
+      }
       indexLayerId++;
     }
 
@@ -181,7 +242,27 @@ var filter = (function() {
       contentSelectLayer.push('</select></div>');
       $("#selectLayerFilter").append(contentSelectLayer.join(''));
     }
+    _setStyle();
+    if(!id) {
+      _selectecDefault();
+    }
   };
+
+  /**
+   * Init combo selector according to config or visible layer
+   */
+  var _selectecDefault = function() {
+    // get selected layer from config
+    var options = mviewer.customComponents.filter.config.options;
+    
+    var selected = options.layers.map(lyr => lyr.selected ? lyr.layerId : null).filter(val => val);
+    if(!selected.length || !(mviewer.getLayer(selected[0]) && mviewer.getLayer(selected[0]).layer && mviewer.getLayer(selected[0]).layer.getVisible())) {
+      selected = options.layers.filter(lyr => mviewer.getLayers(lyr.layerId) && mviewer.getLayer(lyr.layerId).layer.getVisible())[0].layerId;
+      return $('#select-FilterLayer').val(selected).change();
+    }
+    // get selected layer from config
+    return $('#select-FilterLayer').val(selected[0]).change();
+  }
 
   /**
    * Select wanted layer in filter panel
@@ -214,7 +295,7 @@ var filter = (function() {
       layerFiltersParams[index].currentRegexValues = layerFiltersParams[index].currentRegexValues ? layerFiltersParams[index].currentRegexValues : [];
 
       // undefined if first loop
-      if (layerFiltersParams[index].availableValues == undefined || layerFiltersParams[index].updateOnChange) {
+      if (layerFiltersParams[index].availableValues == undefined || layerFiltersParams[index].updateOnChange ) {
         // Removed old values or initialise array
         // Array use to build panel
         layerFiltersParams[index].availableValues = [];
@@ -265,19 +346,12 @@ var filter = (function() {
 
         // if needed, split values with specified separatore
         if (filtersParams.dataSeparator) {
-          var results = (feature.get(filtersParams.attribut)).split(filtersParams.dataSeparator);
-
-          results.forEach(result => {
-
-            // if new value
-            if (filtersParams.availableValues.indexOf(result) < 0) {
-              filtersParams.availableValues.push(result);
-            }
-          });
+          var results = (feature.get(filtersParams.attribut)).split(filtersParams.dataSeparator).map(e=>$.trim(e));          
+          // Add values, distinct and sort values
+          filtersParams.availableValues = [...new Set(filtersParams.availableValues.concat(results))].sort();
         } else if (filtersParams.availableValues.indexOf(feature.get(filtersParams.attribut)) < 0) {
           filtersParams.availableValues.push(feature.get(filtersParams.attribut));
         }
-
       }
     }
   };
@@ -300,14 +374,15 @@ var filter = (function() {
     if (alreadyExist) {
       $('#' + id).empty();
     } else {
-      _checkBox = [
-        '<div class="form-check mb-2 mr-sm-2">',
-        '<div class="form-check filter-legend">',
-        '<legend > ' + filterParams.label + ' </legend>',
-        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-trash" onclick="filter.clearFilter(this.id);"',
-        ' data-toggle="filter-tooltip" data-original-title="Réinitaliser ce filtre"></span>',
-        '</div>',
-        '<div id ="' + id + '" class="form-check">'
+      _checkBox = [`
+        <div class="form-check mb-2 mr-sm-2">
+        <div class="form-check filter-legend">
+        <legend class="textlabel"> ${filterParams.label} </legend>
+        <span id='${clearId}' class="filter-clear glyphicon glyphicon-trash textlabel" onclick="filter.clearFilter(this.id);"
+         data-toggle="filter-tooltip" data-original-title="Réinitaliser ce filtre"></span>
+        </div>
+        <div id="${id}" class="form-check">
+        `
       ];
     }
     filterParams.availableValues.forEach(function(value, index, array) {
@@ -352,8 +427,8 @@ var filter = (function() {
       _buttonForm = [
         '<div class="form-check mb-2 mr-sm-2">',
         '<div class="form-check filter-legend">',
-        '<legend > ' + filterParams.label + ' </legend>',
-        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-trash" onclick="filter.clearFilter(this.id);"',
+        '<legend class="textlabel"> ' + filterParams.label + ' </legend>',
+        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-trash textlabel" onclick="filter.clearFilter(this.id);"',
         ' data-toggle="filter-tooltip" data-original-title="Réinitaliser ce filtre"></span>',
         '</div>',
         '<div id ="' + id + '" class="form-check">'
@@ -412,8 +487,8 @@ var filter = (function() {
       var _text = [
         '<div class="form-check mb-2 mr-sm-2">',
         '<div class="form-check filter-legend">',
-        '<legend > ' + params.label + ' </legend>',
-        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-trash"',
+        '<legend class="textlabel"> ' + params.label + ' </legend>',
+        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-trash textlabel"',
         ' data-toggle="filter-tooltip" data-original-title="Réinitaliser ce filtre"></span>',
         '</div>',
       ];
@@ -439,7 +514,6 @@ var filter = (function() {
           $(">input[type=text]", ".bootstrap-tagsinput").val("");
         }, 1);
       });
-
       $("#" + clearId).on('click', function(event) {
         $("#" + id).tagsinput('removeAll');
         var layerFiltersParams = _layersFiltersParams.get(layerId);
@@ -471,13 +545,13 @@ var filter = (function() {
     var clearId = "filterClear-" + layerId + "-" + params.attribut[0];
 
     if (!$('#' + id).length) {
-      var _datePicker = [
-        '<div class="form-group form-group-timer mb-2 mr-sm-2">',
-        '<div class="form-check filter-legend">',
-        '<legend > ' + params.label + ' </legend>',
-        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-trash"',
-        ' data-toggle="filter-tooltip" data-original-title="Réinitaliser ce filtre"></span>',
-        '</div>',
+      var _datePicker = [`
+        <div class="form-group form-group-timer mb-2 mr-sm-2">
+        <div class="form-check filter-legend">
+        <legend class="textlabel">${params.label}</legend>
+        <span id=${clearId} class="filter-clear glyphicon glyphicon-trash textlabel"
+         data-toggle="filter-tooltip" data-original-title="Réinitaliser ce filtre"></span>
+        </div>`
       ];
       _datePicker.push('<input type="text" class="form-control" id="' + id + '" />');
       _datePicker.push('</div>');
@@ -535,8 +609,8 @@ var filter = (function() {
       comboBox = [
         '<div class="form-group mb-2 mr-sm-2">',
         '<div class="form-check filter-legend">',
-        '<legend > ' + params.label + ' </legend>',
-        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-trash"',
+        '<legend class="textlabel"> ' + params.label + ' </legend>',
+        '<span id=' + clearId + ' class="filter-clear glyphicon glyphicon-trash textlabel"',
         ' data-toggle="filter-tooltip" data-original-title="Réinitaliser ce filtre"></span>',
         '</div>',
         '<select id="' + id + '" class="form-control" onchange="filter.onValueChange(this)">'
@@ -642,7 +716,6 @@ var filter = (function() {
    *  action when filter from filter panel change (checkbox, combobox, textarea or datapicker )
    **/
   var _onValueChange = function(element) {
-
     // get information for elment id ( type-layerid-attribut-index)
     var filtreInformation = element.id.split("-");
     var type = filtreInformation[0];
@@ -672,7 +745,7 @@ var filter = (function() {
       _addFilterElementToList(layerId, attribut, value);
     }
 
-    _filterFeatures(layerId);
+    _filterFeatures(layerId, true);
   };
 
 
@@ -706,7 +779,7 @@ var filter = (function() {
    * @param {String} layerId Id of layer that should be filtered
    *
    **/
-  var _filterFeatures = function(layerId) {
+  var _filterFeatures = function(layerId, isEvent) {
 
     var _layerFiltersParams = _layersFiltersParams.get(layerId);
 
@@ -771,7 +844,8 @@ var filter = (function() {
       var bufferedExtent = ol.extent.buffer(extent, ol.extent.getWidth(extent) / 2);
       mviewer.getMap().getView().fit(bufferedExtent);
     }
-    _manageFilterPanel(layerId);
+    _manageFilterPanel(layerId, isEvent);
+    _setStyle();
   };
 
   /**
@@ -862,6 +936,7 @@ var filter = (function() {
    * reset all feature for all layer
    **/
   var _clearAllFilter = function() {
+    $('.filter-clear').click();
     // Parse all layer to get params
     for (var [layerId, params] of _layersFiltersParams) {
 
@@ -879,6 +954,23 @@ var filter = (function() {
     }
   };
 
+  var _setStyle = function() {
+    if(!mviewer.customComponents.filter.config.options.style) return;
+    var style = mviewer.customComponents.filter.config.options.style;
+    $('.textlabel').css('color', style.text || 'black');
+    $('#advancedFilter').css('background-color', style.background || 'white');
+    $('#advancedFilter').css('border', style.border || '0px transparent solid');
+    // position
+    $('#advancedFilter').css('right', style.right || '60px');
+    $('#advancedFilter').css('left', style.left || '');
+    $('#advancedFilter').css('top', style.top || '65px');
+    $('#advancedFilter').css('bottom', style.bottom || '');
+
+    $('.label-info').css('background-color', style.unSelectedBtnColor || 'grey');
+    $('.label-info').css('color', style.textSelectBtnColor || 'black');
+    $('.form-check-label-checked').css('background-color', style.selectedBtnColor || '#5bc0de');
+  }
+
   return {
     init: _initFilterTool,
     toggle: _toggle,
@@ -886,7 +978,8 @@ var filter = (function() {
     onValueChange: _onValueChange,
     clearFilter: _clearFilter,
     clearAllFilter: _clearAllFilter,
-    selectLayer: _selectLayer
+    selectLayer: _selectLayer,
+    getVisibleFeatures: () => {return _visibleFeatures}
   };
 
 })();
