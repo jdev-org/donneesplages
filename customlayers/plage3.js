@@ -253,32 +253,27 @@ let layer = new ol.layer.Vector({
 let handle = function(clusters, views) {
 
   let layerId = "plage";
+  console.log('handle');
 
   var l = mviewer.getLayer(layerId);
 
   // Zoom only if multiple feature
-  if (clusters.length > 0 && clusters[0].properties.features.length > 1) {
+  if (clusters.length > 0 && clusters[0].getProperties().features.length > 1) {
     var extent = ol.extent.createEmpty();
 
-    clusters[0].properties.features.forEach(function(feature, i) {
+    clusters[0].getProperties().features.forEach(function(feature, i) {
       ol.extent.extend(extent, feature.getGeometry().getExtent());
     });
 
     var bufferedExtent = ol.extent.buffer(extent, ol.extent.getWidth(extent) / 2);
     mviewer.getMap().getView().fit(bufferedExtent);
-  } else if (clusters.length > 0 && clusters[0].properties.features) {
-    var elements = [];
-
-    clusters[0].properties.features.forEach(function(feature, i) {
-      elements.push({
-         properties: feature.getProperties()
-      });
-    });
+  } else if (clusters.length > 0 && clusters[0].getProperties().features) {
+    var features = clusters[0].getProperties().features;
     var html;
     if (l.template) {
-      html = info.templateHTMLContent(elements, l);
+      html = info.templateHTMLContent(features, l);
     } else {
-      html = info.formatHTMLContent(elements, l);
+      html = info.templateHTMLContent(features, l);
     }
     var panel = "";
     if (configuration.getConfiguration().mobile) {
@@ -286,12 +281,14 @@ let handle = function(clusters, views) {
     } else {
       panel = "right-panel";
     }
+
     var view = views[panel];
+    console.log(view);
     view.layers.push({
       "id": view.layers.length + 1,
       "firstlayer": true,
-      "manyfeatures": (clusters[0].properties.features.length > 1),
-      "nbfeatures": clusters[0].properties.features.length,
+      "manyfeatures": (features.length > 1),
+      "nbfeatures": features.length.length,
       "name": l.name,
       "layerid": layerId,
       "theme_icon": l.icon,
