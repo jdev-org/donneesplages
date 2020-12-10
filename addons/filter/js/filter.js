@@ -978,6 +978,7 @@ var filter = (function() {
     $('#advancedFilter').css('left', style.left || '');
     $('#advancedFilter').css('top', style.top || '65px');
     $('#advancedFilter').css('bottom', style.bottom || '');
+    $('#advancedFilter').css('z-index', '1000000')
   }
 
   return {

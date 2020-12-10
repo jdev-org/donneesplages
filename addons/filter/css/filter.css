@@ -7,6 +7,9 @@
   left: 60px;
   padding: 5px 15px 2px;
   max-width: 250px;
+  z-index: 1000;
+  max-height: 60%;
+  overflow: auto;
 }
 
 .advancedFilter h2 {
@@ -62,6 +65,7 @@
   position: relative;
   color: blue;
 }
+
 
 .filter-legend .glyphicon-trash {
   position: absolute;
