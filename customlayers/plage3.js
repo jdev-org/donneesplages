@@ -283,7 +283,6 @@ let handle = function(clusters, views) {
     }
 
     var view = views[panel];
-    console.log(view);
     view.layers.push({
       "id": view.layers.length + 1,
       "firstlayer": true,
