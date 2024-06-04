@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
-    <application titlehtml="dede" title="Plages surveillées de Nouvelle-Aquitaine" mouseposition="false" logo="apps/donneesplages/img/logo/gip_lito_2030.jpg" showhelp="false" help="apps/donneesplages/infos.html" measuretools="false" exportpng="true" style="css/themes/plage_b.css" togglealllayersfromtheme="true"/>
+    <application title="Plages surveillées de Nouvelle-Aquitaine" mouseposition="false" logo="apps/donneesplages/img/logo/gip_lito_2030.jpg" showhelp="false" help="apps/donneesplages/infos.html" measuretools="false" exportpng="true" style="css/themes/plage_b.css" togglealllayersfromtheme="true"/>
     <mapoptions maxzoom="19" projection="EPSG:3857" center="37263.77010759735,5620009.10189043" zoom="8" projextent="-20037508.342789244, -20037508.342789244, 20037508.342789244, 20037508.342789244" />
 
     <baselayers style="default"><!-- style="default"||gallery" -->
         <baselayer  type="OSM" id="positron" label="Positron" title="CartoDb" thumbgallery="img/basemap/positron.png"
             url="http://{a-c}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png" maxzoom="20"
             visible="true" attribution="Map tiles by  &lt;a href='http://cartodb.com/attributions'>CartoDb &lt;/a>, under  &lt;a href='http://creativecommons.org/licenses/by/3.0/'>CC BY 3.0 &lt;/a>" />
-        <baselayer  type="WMTS" id="ortho1" label="Photo aérienne" title="GéoPortail" maxscale="2000" thumbgallery="img/basemap/ortho.jpg"
-            url="https://data.geopf.fr/wmts" layers="ORTHOIMAGERY.ORTHOPHOTOS" format="image/jpeg" visible="false" fromcapacity="false"
-            attribution="&lt;a href='http://www.geoportail.fr/' target='_blank'>&lt;img src='https://api.ign.fr/geoportail/api/js/latest/theme/geoportal/img/logo_gp.gif'>&lt;/a>" style="normal" matrixset="PM" maxzoom="22"/>
-<baselayer  type="WMTS" id="planign" label="Plan IGN" title="GéoPortail" maxscale="2000" thumbgallery="img/basemap/plan_ign_v2.png"
-            url="https://data.geopf.fr/wmts?SERVICE=WMTS" layers="GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2" format="image/png" visible="false" fromcapacity="false"
+        <baselayer  type="WMTS" id="ortho_ign" label="Photo aérienne" title="GéoPortail" maxscale="2000" thumbgallery="img/basemap/ortho.jpg"
+            url="https://wxs.ign.fr/ortho/geoportail/wmts" layers="ORTHOIMAGERY.ORTHOPHOTOS" format="image/jpeg" visible="false" fromcapacity="false"
+            attribution="&lt;a href='https://www.geoportail.fr/' target='_blank'>&lt;img src='https://api.ign.fr/geoportail/api/js/latest/theme/geoportal/img/logo_gp.gif'>&lt;/a>" style="normal" matrixset="PM" maxzoom="22"/>
+<baselayer  type="WMTS" id="plan_ign" label="Plan" title="GéoPortail" maxscale="2000" thumbgallery="img/basemap/plan_ign_v2.png"
+            url="https://wxs.ign.fr/cartes/geoportail/wmts" layers="GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2" format="image/png" visible="false" fromcapacity="false"
             attribution="&lt;a href='https://www.geoportail.fr/' target='_blank'>&lt;img src='https://api.ign.fr/geoportail/api/js/latest/theme/geoportal/img/logo_gp.gif'>&lt;/a>" style="normal" matrixset="PM" maxzoom="22"/>
     </baselayers>
-    <proxy url="https://www.pigma.org/service/proxy/?url="/>
+    <!-- <proxy url="https://www.pigma.org/proxy/?url="/> -->
     <olscompletion url="https://api-adresse.data.gouv.fr/search/" type="ban" attribution="API adresse.data.gouv.fr"/>
     <searchparameters bbox="false" localities="false" features="true"/>
 
@@ -49,5 +49,5 @@
         <extension type="component" id="styleinfo" path="apps/donneesplages/addons" />
         <!-- Advanced fitler -->
         <extension type="component" id="filter" path="apps/donneesplages/addons" />
-    </extensions>	
+    </extensions>
 </config>

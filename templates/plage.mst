@@ -3,53 +3,85 @@
 		<center><h3 class="title-feature">{{nom_plage}}</h3>
 		<h4>{{commune}}</h4>
 		<br/>
-		<center><span style="font-family:'roboto_bold'"> Caractéristiques de la plage :</span> {{plage_caracteristiques}}<br/></center>
 		<center><span style="font-family:'roboto_bold'"> Nature de la baignade :</span> {{nature_baignade}}<br/></center>
+		<center><span style="font-family:'roboto_bold'"> Caractéristiques de la plage :</span> {{plage_caracteristiques}}<br/></center>		
 		<p class="text-feature">
 		{{#photo}}
 			<center><img src="{{photo}}" alt="Région Nouvelle-Aquitaine" width="238px" /></center><br>
 		{{/photo}}
-		<center><span class="titrechamp">Périodes de surveillances détaillées</span></center>
+		<center><span class="titrechamp">Périodes de surveillances détaillées</span><br></center>
+		<!-- début détail surveillance-->
+		<div id=divdatedetail{{id_plage_sit}}>
 		<table id="table{{id_plage_sit}}">
             <thead>
               <tr>
                 <th data-field="Date ouverture" data-sortable="true">Dates</th>
-				<th data-field="Lundi">L</th>
-				<th data-field="Mardi">M</th>
-				<th data-field="Mercredi">M</th>
-				<th data-field="Jeudi">J</th>
-                <th data-field="Vendredi">V</th>
-                <th data-field="Samedi">S</th>
-				<th data-field="Dimanche">D</th>
+				<th data-field="Semaine">Semaine</th>
+				<th data-field="Week-end">Week-end</th>
               </tr>
             </thead>
           </table>
+		  <!-- fin détail surveillance-->
+		  <center><i><b>Pour votre sécurité, baignez vous entre les drapeaux, aux horaires et aux périodes de surveillance</b></i></center>
+		  </div><br>
+		  <!-- début message sans surveillance-->
+		  <div id="messageplagesurv{{id_plage_sit}}" style="display:none;"> <!-- bloc affiché en cas d'absence de dates de surveillance-->
+		  <p>
+		  	Baignade non surveillée.
+		  </p>
+		  </div>
+		  <!-- fin message sans surveillance-->
 		  	<center><span class="titrechamp">Descriptif</span></center><br>
 		  	<span style="font-family:'roboto_bold';text-align: justify"></span> {{descriptif}}<br/><br/>
 			<center><span class="titrechamp">Equipements et services</span></center>
-			<center><span class="logo" id="picnicnb{{id_plage_sit}}"></span><span class="logo" id="picnic{{id_plage_sit}}"></span><span class="logo" id="wcnb{{id_plage_sit}}"></span><span class="logo" id="wc{{id_plage_sit}}"></span><span id="jeux"></span><span id="jeux{{id_plage_sit}}"></span><span class="logo" id="douchesnb{{id_plage_sit}}"></span><span class="logo" id="douches{{id_plage_sit}}"></span><span class="logo" id="restaurationnb{{id_plage_sit}}"></span><span class="logo" id="restauration{{id_plage_sit}}"></span></center><br/>
+			<center><span class="logo" id="picnicnb{{id_plage_sit}}"></span><span class="logo" id="picnic{{id_plage_sit}}"></span><span class="logo" id="wcnb{{id_plage_sit}}"></span><span class="logo" id="wc{{id_plage_sit}}"></span><span id="jeux"></span><span id="jeux{{id_plage_sit}}"></span><span class="logo" id="douchesnb{{id_plage_sit}}"></span><span class="logo" id="douches{{id_plage_sit}}"></span><!--span class="logo" id="restaurationnb{{id_plage_sit}}"></span><span class="logo" id="restauration{{id_plage_sit}}"--></span></center><br/>
 			<center><span class="titrechamp">Stationnements</span></center>
-			<center><span class="logo" id="voiturenb{{id_plage_sit}}"></span><span class="logo" id="voiture{{id_plage_sit}}"></span><span class="logo" id="velonb{{id_plage_sit}}"></span><span class="logo" id="velo{{id_plage_sit}}"></span><span class="logo" id="campingcarnb{{id_plage_sit}}"></span><span class="logo" id="campingcar{{id_plage_sit}}"></span></center><br/>
-			<span style="display:none" id="datedetail{{id_plage_sit}}">{{date_detail}}</span>
+			<center>
+			<table>
+				<tr>
+					<td><span class="logo" id="voiturenb{{id_plage_sit}}"></span><span class="logo" id="voiture{{id_plage_sit}}"></span></td><td><span class="logo" id="velonb{{id_plage_sit}}"></span><span class="logo" id="velo{{id_plage_sit}}"></span></td>
+				</tr>
+				<tr>
+					<td id="voiturepayant" style="display:none;"><center>Payant</center></td><td></td><td></td>
+				</tr>
+			</table>
+			</center>			
+			{{#desc_acces_handi}}
+			<br>
+			<center><span class="titrechamp">Accès PMR</span></center><br>
+		  	<span style="font-family:'roboto_bold';text-align: justify"></span> {{desc_acces_handi}}<br/><br/>
+			{{/desc_acces_handi}}
+			
+			<!--Désactivation de l'iframe parking 
+			{{#iframe_parking}}
+			<center>{{{iframe_parking}}}</center>
+			{{/iframe_parking}}-->
+			<span style="display:none" id="datedetail{{id_plage_sit}}">{{date_detail}}</span> <!-- dates de surveillance. masqué pour être récupéré via JS et non visible sur la fiche-->
 			<span style="display:none" id="logoequipservice{{id_plage_sit}}">{{equipements_services}}</span>
 			<span style="display:none" id="logostationnement{{id_plage_sit}}">{{stationnement}}</span>
-
+			<span style="display:none" id="dep{{id_plage_sit}}">{{insee_dep}}</span><br>
+			<center><span class="titrechamp">Télécharger les données</span></center><br>
+			<b><a href="https://www.pigma.org/portail/fr/jeux-de-donnees/plages-de-nouvelle-aquitaine/info" target="_blank"><b>Données OpenData</b></a></b>
 		</p>
 	</li>
 {{/features}}
 <script>
-	var plage = []; //création d'un tableau des plages (pour gérer plusieurs plages au clic) vide
-
+	
+var plage = []; //création d'un tableau des plages (pour gérer plusieurs plages au clic) vide
 	{{#features}}
 		plage.push('{{id_plage_sit}}'); //on rempli le tableau
+		var voiturepayant = '{{stationnement_voiture_payant}}';
 	{{/features}}
 
 
 plage.forEach(function(item){//on boucle sur le tableau
 	var data = $( "span#datedetail"+item).text();
+	var dep = $( "span#dep"+item).text();
 	//on parse que si il y à de la donnée
 	if (data === ""){
 		date="";
+		$("#divdatedetail" + item).hide();
+		$("#messageplagesurv" + item).show();
 	}else{
 		data = JSON.parse(data);
 	};
@@ -62,7 +94,7 @@ plage.forEach(function(item){//on boucle sur le tableau
 			sortStable: true
 			})
 	});
-
+	
 		$( "span.logo").css("background-size", "32px 32px");
 		$( "span.logo").css("width", "32px");
 		$( "span.logo").css("height", "32px");
@@ -75,8 +107,6 @@ plage.forEach(function(item){//on boucle sur le tableau
 		$( "span#douchesnb" + item).css("background-image", "url('apps/donneesplages/img/logo/douchesnb.png')");
 		$( "span#restaurationnb" + item).css("display", "inline-block");
 		$( "span#restaurationnb" + item).css("background-image", "url('apps/donneesplages/img/logo/restaurationnb.png')");
-		$( "span#campingcarnb" + item).css("display", "inline-block");
-		$( "span#campingcarnb" + item).css("background-image", "url('apps/donneesplages/img/logo/campingcarnb.png')");
 		$( "span#velonb" + item).css("display", "inline-block");
 		$( "span#velonb" + item).css("background-image", "url('apps/donneesplages/img/logo/velonb.png')");
 		$( "span#voiturenb" + item).css("display", "inline-block");
@@ -87,7 +117,7 @@ plage.forEach(function(item){//on boucle sur le tableau
 	if (logoequipservice.match('Restauration')){
 		$( "span#restaurationnb" + item).css("display", "none");
 		$( "span#restauration" + item).css("display", "inline-block");
-		$( "span#restauration" + item).css("background-image", "url('apps/donneesplages/img/logo/restauration.png')")
+		$( "span#restauration" + item).css("background-image", "url('apps/donneesplages/img/logo/restauration.png')")		
 	};
 	if (logoequipservice.match('Aire de pique-nique')){
 		$( "span#picnicnb" + item).css("display", "none");
@@ -99,27 +129,25 @@ plage.forEach(function(item){//on boucle sur le tableau
 		$( "span#douches" + item).css("background-image", "url('apps/donneesplages/img/logo/douches.png')");
 		$( "span#douches" + item).css("display", "inline-block");
 	};
-	if (logoequipservice.match('WC')){
+	if (logoequipservice.match('Toilettes')){
 		$( "span#wcnb" + item).css("display", "none");
 		$( "span#wc" + item).css("background-image", "url('apps/donneesplages/img/logo/wc.png')");
 		$( "span#wc" + item).css("display", "inline-block");
 	};
+	if (voiturepayant == 'Oui'){
+		$("td#voiturepayant").show();
+	}
 
 	//stationnement
 	var logostationnement = $( "span#logostationnement" + item).text();
-	if (logostationnement.match('Camping-cars')){
-		$( "span#campingcarnb" + item).css("display", "none");
-		$( "span#campingcar" + item).css("background-image", "url('apps/donneesplages/img/logo/campingcar.png')");
-		$( "span#campingcar" + item).css("display", "inline-block");
-	};
 	if(logostationnement.match('Vélos')){
 		$( "span#velonb" + item).css("display", "none");
-		$( "span#velo" + item).css("background-image", "url('apps/donneesplages/img/logo/velo.png')");
+		$( "span#velo" + item).css("background-image", "url('apps/donneesplages/img/logo/velo.png')");			
 		$( "span#velo" + item).css("display", "inline-block");
 	};
 	if(logostationnement.match('Voitures')){
 		$( "span#voiturenb" + item).css("display", "none");
-		$( "span#voiture" + item).css("background-image", "url('apps/donneesplages/img/logo/voiture.png')");
+		$( "span#voiture" + item).css("background-image", "url('apps/donneesplages/img/logo/voiture.png')");			
 		$( "span#voiture" + item).css("display", "inline-block");
 	};
 });
@@ -146,5 +174,8 @@ plage.forEach(function(item){//on boucle sur le tableau
 	.titrechamp{
 		font-size:18px;
 		font-family:"roboto_bold";
+	}
+	#app {
+		height:100px:
 	}
 </style>

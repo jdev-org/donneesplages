@@ -1,0 +1,20 @@
+{
+  "js": ["js/filter.js", "js/jquery.easyDrag.min.js"],
+  "css": "css/filter.css",
+  "html": "filter.html",
+  "target": "page-content-wrapper",
+  "options": {
+    "title": "filtrer",
+    "open": true,
+    "zoomOnFeatures": true,
+    "layers": [{
+      "layerId": "plage",
+      "filter": [{
+          "attribut": "grand_territoire",
+          "type": "button",
+          "label": "Grands territoires"
+        }
+      ]
+    }]
+  }
+}

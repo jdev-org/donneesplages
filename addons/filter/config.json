@@ -5,21 +5,14 @@
   "target": "page-content-wrapper",
   "options": {
     "title": "filtrer",
-    "open": true,
+    "open": false,
     "zoomOnFeatures": true,
     "layers": [{
       "layerId": "plage",
       "filter": [{
           "attribut": "grand_territoire",
           "type": "button",
-          "label": "Grands térritoires"
-        },
-        {
-          "attribut": "equipements_services",
-          "type": "button",
-          "label": "Equipements et services",
-          "updateOnChange": true,
-          "dataSeparator":","
+          "label": "Grands territoires"
         },
         {
           "attribut": "nature_baignade",
@@ -36,7 +29,7 @@
         {
           "attribut": ["date_ouverture", "date_fermeture"],
           "type": "date",
-          "label": "Ouverte le",
+          "label": "Plages surveillées le",
           "updateOnChange": true
         }
       ]

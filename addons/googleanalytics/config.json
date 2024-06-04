@@ -1,0 +1,7 @@
+{
+    "js": [],
+    "css": "googleanalytics.css",
+    "html": "googleanalytics.html",
+    "target": "body",
+    "options": {}
+}
